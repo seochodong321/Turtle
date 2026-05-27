@@ -1,0 +1,424 @@
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family:
+    'Apple SD Gothic Neo', 'Noto Sans KR',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #fafaf9;
+  color: #111;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 레이아웃 ────────────────────────────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 헤더 ────────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid #e8e8e5;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111;
+}
+
+/* 페이즈 뱃지 */
+.phase-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+
+.phase-preview {
+  background: #fef9ec;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.phase-answer {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.phase-review {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+/* ── 메인 컨텐츠 ─────────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 56px 32px 48px;
+}
+
+/* ── 질문 블록 ───────────────────────────────────────────────────────────── */
+.question-block {
+  margin-bottom: 48px;
+}
+
+.question-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.question-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: #111;
+  word-break: keep-all;
+}
+
+/* ── 페이즈 공통 ─────────────────────────────────────────────────────────── */
+.phase-block {
+  animation: fadeUp 0.25s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PREVIEW ────────────────────────────────────────────────────────────── */
+.preview-card {
+  padding: 36px 32px;
+  background: #f5f5f3;
+  border-radius: 14px;
+}
+
+.preview-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.preview-sub {
+  font-size: 14px;
+  color: #999;
+}
+
+/* ── ANSWER: 폼 ──────────────────────────────────────────────────────────── */
+.answer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.textarea-wrap {
+  position: relative;
+}
+
+.answer-textarea {
+  display: block;
+  width: 100%;
+  padding: 18px 20px 40px;
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.65;
+  color: #111;
+  background: #fff;
+  border: 1.5px solid #e0e0dc;
+  border-radius: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  word-break: keep-all;
+}
+
+.answer-textarea:focus {
+  border-color: #2563eb;
+}
+
+.answer-textarea::placeholder {
+  color: #ccc;
+}
+
+.char-count {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  font-size: 12px;
+  color: #ccc;
+  pointer-events: none;
+  transition: color 0.15s;
+}
+
+.char-count.at-limit {
+  color: #ef4444;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.submit-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.submit-btn:not(:disabled):hover {
+  background: #333;
+}
+
+.answer-notice {
+  font-size: 12px;
+  color: #bbb;
+  text-align: center;
+}
+
+/* ── ANSWER: 제출 완료 ───────────────────────────────────────────────────── */
+.submitted-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 40px 32px;
+  background: #f9f9f8;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.check-icon {
+  width: 48px;
+  height: 48px;
+  background: #111;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.submitted-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 24px;
+}
+
+.submitted-sub {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 20px;
+  word-break: keep-all;
+}
+
+/* ── 공통 answer-box (내 답변) ───────────────────────────────────────────── */
+.answer-box {
+  width: 100%;
+  text-align: left;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e8e8e5;
+  border-radius: 10px;
+}
+
+.answer-box-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #bbb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.answer-box-text {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
+/* ── REVIEW ──────────────────────────────────────────────────────────────── */
+.review-mine {
+  margin-bottom: 40px;
+}
+
+.answers-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e8e8e5;
+}
+
+.answers-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+}
+
+.answers-count {
+  font-size: 13px;
+  color: #bbb;
+}
+
+.answers-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e8e8e5;
+  border-radius: 12px;
+}
+
+.answer-index {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  background: #f2f2f0;
+  border-radius: 50%;
+}
+
+.answer-content {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
+.empty-answers {
+  padding: 48px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* ── 로딩 / 에러 ─────────────────────────────────────────────────────────── */
+.center-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100vh;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid #e8e8e5;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  width: 44px;
+  height: 44px;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.error-msg {
+  font-size: 15px;
+  color: #666;
+}
+
+.retry-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ── 푸터 ────────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 20px 32px;
+  border-top: 1px solid #e8e8e5;
+  text-align: center;
+}
+
+.footer p {
+  font-size: 12px;
+  color: #ccc;
+  letter-spacing: 0.02em;
+}
+
+/* ── 반응형 ──────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header  { padding: 18px 20px; }
+  .main    { padding: 40px 20px 40px; }
+  .question-text { font-size: 21px; }
+  .preview-card  { padding: 28px 24px; }
+  .submitted-card { padding: 32px 20px; }
+}
