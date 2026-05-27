@@ -16,9 +16,13 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: '답변 제출은 오전 9시부터 오후 9시 사이에만 가능합니다.' });
   }
 
-  const { content } = req.body || {};
+  const raw = (req.body || {}).content;
+  // 비가시 제어문자 제거 (탭·줄바꿈 제외)
+  const content = typeof raw === 'string'
+    ? raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    : '';
 
-  if (!content || content.trim().length === 0) {
+  if (!content.trim()) {
     return res.status(400).json({ error: '답변 내용을 입력해주세요.' });
   }
   if (content.trim().length > 500) {
@@ -50,8 +54,9 @@ module.exports = async (req, res) => {
     // 기존 답변이 있으면 풀에서 제거 후 교체
     const filtered = pool.filter(a => !prevAnswer || a.id !== prevAnswer.id);
 
+    const TTL_90D = 90 * 24 * 60 * 60;
     await Promise.all([
-      redis.set(`answers:${today}`, [...filtered, newAnswer]),
+      redis.set(`answers:${today}`, [...filtered, newAnswer], { ex: TTL_90D }),
       redis.set(ipKey, newAnswer),
     ]);
 
