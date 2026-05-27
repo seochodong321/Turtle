@@ -1,6 +1,6 @@
 const { Redis } = require('@upstash/redis');
 const { v4: uuidv4 } = require('uuid');
-const { getKSTDateStr, getPhase } = require('./_utils');
+const { getKSTDateStr, getPhase, getClientIP } = require('./_utils');
 
 const redis = Redis.fromEnv();
 
@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '답변은 500자 이내로 작성해주세요.' });
   }
 
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  const ip = getClientIP(req);
   const today = getKSTDateStr();
   const ipKey = `answer:${ip}:${today}`;
 
@@ -35,6 +35,11 @@ module.exports = async (req, res) => {
       redis.get(ipKey),
     ]);
 
+    const pool = existing || [];
+    if (!prevAnswer && pool.length >= 500) {
+      return res.status(503).json({ error: '오늘의 답변이 마감되었습니다.' });
+    }
+
     const newAnswer = {
       id: uuidv4(),
       questionId: today,
@@ -43,10 +48,10 @@ module.exports = async (req, res) => {
     };
 
     // 기존 답변이 있으면 풀에서 제거 후 교체
-    const pool = (existing || []).filter(a => !prevAnswer || a.id !== prevAnswer.id);
+    const filtered = pool.filter(a => !prevAnswer || a.id !== prevAnswer.id);
 
     await Promise.all([
-      redis.set(`answers:${today}`, [...pool, newAnswer]),
+      redis.set(`answers:${today}`, [...filtered, newAnswer]),
       redis.set(ipKey, newAnswer),
     ]);
 

@@ -1,7 +1,7 @@
 const { Redis } = require('@upstash/redis');
 const fs = require('fs');
 const path = require('path');
-const { getKSTDateStr } = require('../_utils');
+const { getKSTDateStr, getClientIP } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
-    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const ip = getClientIP(req);
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
 

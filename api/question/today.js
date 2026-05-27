@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Redis } = require('@upstash/redis');
-const { getKSTDateStr, getPhase } = require('../_utils');
+const { getKSTDateStr, getPhase, getClientIP } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
       return res.status(404).json({ error: '오늘의 질문이 준비되지 않았습니다.' });
     }
 
-    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const ip = getClientIP(req);
     const myAnswer = await redis.get(`answer:${ip}:${today}`);
 
     res.json({ question, phase: getPhase(), today, myAnswer: myAnswer?.content || null });
