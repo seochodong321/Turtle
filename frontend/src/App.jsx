@@ -223,7 +223,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <span className="brand">기획자의 감각훈련소</span>
+        <span className="brand"></span>
         <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
       </header>
 
