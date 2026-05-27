@@ -30,6 +30,39 @@ const PHASE_LABEL = {
   review:  '리뷰 시간',
 };
 
+// ── 오후 9시까지 카운트다운 훅 ────────────────────────────────────────────────
+
+function useCountdownTo21() {
+  const [remaining, setRemaining] = useState('');
+
+  useEffect(() => {
+    function tick() {
+      const now = new Date();
+      const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+      const end = new Date(kst);
+      end.setHours(21, 0, 0, 0);
+
+      const diff = end - kst;
+      if (diff <= 0) { setRemaining(''); return; }
+
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      const s = Math.floor((diff % 60_000) / 1_000);
+
+      const parts = [];
+      if (h > 0) parts.push(`${h}시간`);
+      parts.push(`${String(m).padStart(2, '0')}분`);
+      parts.push(`${String(s).padStart(2, '0')}초`);
+      setRemaining(parts.join(' '));
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return remaining;
+}
+
 // ── 실시간 시계 ───────────────────────────────────────────────────────────────
 
 function LiveClock() {
@@ -61,19 +94,47 @@ function LiveClock() {
   );
 }
 
+// ── 이용 안내 ─────────────────────────────────────────────────────────────────
+
+const GUIDE_ITEMS = [
+  { phase: 'preview', time: '자정 – 오전 9시',    desc: '질문을 읽고 혼자 생각을 정리하는 시간' },
+  { phase: 'answer',  time: '오전 9시 – 오후 9시', desc: '나만의 답변을 작성하고 제출하는 시간' },
+  { phase: 'review',  time: '오후 9시 – 자정',    desc: '참여자들의 답변을 확인하고 비교하는 시간' },
+];
+
+function PhaseGuide({ currentPhase }) {
+  return (
+    <div className="guide">
+      <p className="guide-label">이용 안내</p>
+      <ul className="guide-list">
+        {GUIDE_ITEMS.map(item => (
+          <li
+            key={item.phase}
+            className={`guide-item${currentPhase === item.phase ? ' guide-active' : ''}`}
+          >
+            <span className="guide-time">{item.time}</span>
+            <span className="guide-desc">{item.desc}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ── 루트 컴포넌트 ─────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [phase, setPhase]             = useState(calcPhase);
-  const [question, setQuestion]       = useState(null);
-  const [answers, setAnswers]         = useState([]);
+  const [phase, setPhase]                 = useState(calcPhase);
+  const [question, setQuestion]           = useState(null);
+  const [answers, setAnswers]             = useState([]);
+  const [answerCount, setAnswerCount]     = useState(null);
   const [pastQuestions, setPastQuestions] = useState([]);
-  const [content, setContent]         = useState('');
-  const [submitted, setSubmitted]     = useState(false);
-  const [myAnswer, setMyAnswer]       = useState('');
-  const [status, setStatus]           = useState('loading');
-  const [errorMsg, setErrorMsg]       = useState('');
-  const [submitting, setSubmitting]   = useState(false);
+  const [content, setContent]             = useState('');
+  const [submitted, setSubmitted]         = useState(false);
+  const [myAnswer, setMyAnswer]           = useState('');
+  const [status, setStatus]               = useState('loading');
+  const [errorMsg, setErrorMsg]           = useState('');
+  const [submitting, setSubmitting]       = useState(false);
 
   const todayKey = `answer_${getKSTDateStr()}`;
   const MAX_CHARS = 500;
@@ -95,7 +156,7 @@ export default function App() {
     try {
       const res  = await fetch('/api/answers/today');
       const data = await res.json();
-      if (res.ok) setAnswers(data.answers);
+      if (res.ok) { setAnswers(data.answers); setAnswerCount(data.count); }
     } catch {}
   }, []);
 
@@ -125,7 +186,8 @@ export default function App() {
   }, [fetchQuestion, fetchPastQuestions, todayKey]);
 
   useEffect(() => {
-    if (phase === 'review') fetchAnswers();
+    // 답변 시간엔 count만, 리뷰 시간엔 전체 목록 로드
+    if (phase === 'answer' || phase === 'review') fetchAnswers();
   }, [phase, fetchAnswers]);
 
   async function handleSubmit(e) {
@@ -180,7 +242,6 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* 오늘의 질문 */}
             <section className="question-block">
               <p className="question-meta">오늘의 질문</p>
               <h1 className="question-text">{question?.question}</h1>
@@ -196,13 +257,15 @@ export default function App() {
                 maxChars={MAX_CHARS}
                 submitting={submitting}
                 onSubmit={handleSubmit}
+                answerCount={answerCount}
               />
             )}
             {phase === 'review'  && (
               <ReviewPhase myAnswer={myAnswer} answers={answers} />
             )}
 
-            {/* 지난 훈련 기록 */}
+            <PhaseGuide currentPhase={phase} />
+
             {pastQuestions.length > 0 && (
               <PastQuestions questions={pastQuestions} />
             )}
@@ -230,7 +293,10 @@ function PreviewPhase() {
   );
 }
 
-function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit }) {
+function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, answerCount }) {
+  const countdown = useCountdownTo21();
+  const charCount = content.length;
+
   if (submitted) {
     return (
       <section className="phase-block">
@@ -241,18 +307,36 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
             <p className="answer-box-label">내 답변</p>
             <p className="answer-box-text">{myAnswer}</p>
           </div>
-          <p className="submitted-sub">
-            오후 9시 이후에 다른 참여자의 답변을 확인할 수 있습니다.
-          </p>
+          {answerCount !== null && (
+            <p className="submitted-participants">
+              오늘 <span className="participants-count">{answerCount}명</span>이 답변했습니다.
+            </p>
+          )}
+          {countdown ? (
+            <p className="submitted-sub">
+              리뷰 시작까지&nbsp;
+              <span className="submitted-countdown">{countdown}</span>
+              &nbsp;남았습니다.
+            </p>
+          ) : (
+            <p className="submitted-sub">오후 9시 이후에 다른 참여자의 답변을 확인할 수 있습니다.</p>
+          )}
         </div>
       </section>
     );
   }
 
-  const charCount = content.length;
-
   return (
     <section className="phase-block">
+      {countdown && (
+        <div className="deadline-bar">
+          <span className="deadline-label">마감까지</span>
+          <span className="deadline-time">{countdown}</span>
+          {answerCount !== null && (
+            <span className="deadline-participants">{answerCount}명 참여 중</span>
+          )}
+        </div>
+      )}
       <form className="answer-form" onSubmit={onSubmit}>
         <div className="textarea-wrap">
           <textarea

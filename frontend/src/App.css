@@ -414,6 +414,130 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* ── 카운트다운 마감 바 ───────────────────────────────────────────────────── */
+.deadline-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  background: #fffbf0;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.deadline-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  flex-shrink: 0;
+}
+
+.deadline-time {
+  font-size: 16px;
+  font-weight: 700;
+  color: #b45309;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.deadline-participants {
+  font-size: 12px;
+  font-weight: 500;
+  color: #b45309;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* 제출 완료 카운트다운 */
+.submitted-countdown {
+  font-weight: 700;
+  color: #111;
+  font-variant-numeric: tabular-nums;
+}
+
+.submitted-participants {
+  font-size: 14px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.participants-count {
+  font-weight: 700;
+  color: #111;
+}
+
+/* ── 이용 안내 ────────────────────────────────────────────────────────────── */
+.guide {
+  margin-top: 56px;
+  padding: 24px;
+  background: #f7f7f5;
+  border-radius: 14px;
+}
+
+.guide-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.guide-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid #efefed;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.guide-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.guide-item:first-child {
+  padding-top: 0;
+}
+
+.guide-active {
+  opacity: 1;
+}
+
+.guide-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  white-space: nowrap;
+  min-width: 136px;
+  flex-shrink: 0;
+}
+
+.guide-active .guide-time {
+  color: #111;
+}
+
+.guide-desc {
+  font-size: 13px;
+  color: #888;
+  word-break: keep-all;
+}
+
+.guide-active .guide-desc {
+  color: #333;
+  font-weight: 500;
+}
+
 /* ── 실시간 시계 바 ───────────────────────────────────────────────────────── */
 .clock-bar {
   display: flex;
