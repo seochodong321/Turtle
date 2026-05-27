@@ -54,6 +54,7 @@ body {
   background: #f2f2f0;
   color: #666;
   border: 1px solid #e8e8e5;
+  animation: phasePulse 3.5s ease-in-out 1.5s infinite;
 }
 
 .phase-preview, .phase-answer, .phase-review { /* no overrides */ }
@@ -79,67 +80,46 @@ body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-bottom: 14px;
-}
-
-/* 캐러셀: 가운데 오늘, 양쪽에 어제/내일 peek */
-.question-carousel {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  position: relative;
-  /* main padding 32px을 돌파해 화면 끝까지 확장 */
-  margin: 0 -32px;
+  animation: fadeUp 0.4s ease both;
 }
 
 .question-text {
-  flex: 1;
-  min-width: 0;
-  padding: 0 32px;
   font-size: 24px;
   font-weight: 700;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: #111;
   word-break: keep-all;
-}
-
-.question-peek {
-  flex: 0 0 80px;
-  overflow: hidden;
-  opacity: 0.18;
-  filter: blur(4px);
-  pointer-events: none;
-  padding-top: 3px;
-}
-
-/* 안쪽(오늘 질문 방향)으로 갈수록 페이드아웃 */
-.question-peek:first-child {
-  -webkit-mask-image: linear-gradient(to right, black 30%, transparent 100%);
-  mask-image: linear-gradient(to right, black 30%, transparent 100%);
-}
-.question-peek:last-child {
-  -webkit-mask-image: linear-gradient(to left, black 30%, transparent 100%);
-  mask-image: linear-gradient(to left, black 30%, transparent 100%);
-}
-
-.question-peek-text {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: -0.03em;
-  color: #111;
-  white-space: nowrap; /* 한 줄로만, 세로 쌓임 방지 */
+  animation: questionReveal 0.7s cubic-bezier(0.25, 0, 0.1, 1) 0.08s both;
 }
 
 /* ── 페이즈 공통 ─────────────────────────────────────────────────────────── */
 .phase-block {
-  animation: fadeUp 0.25s ease both;
+  animation: fadeUp 0.4s ease 0.22s both;
 }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 질문 텍스트: 블러 → 선명, 생각이 떠오르는 느낌 */
+@keyframes questionReveal {
+  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* 제출 완료 체크 아이콘 팝 */
+@keyframes checkPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  65%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* 페이즈 뱃지: 현재 진행 중 느낌 */
+@keyframes phasePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
 }
 
 /* ── PREVIEW ────────────────────────────────────────────────────────────── */
@@ -190,7 +170,8 @@ body {
 }
 
 .answer-textarea:focus {
-  border-color: #999;
+  border-color: #888;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .answer-textarea::placeholder {
@@ -235,6 +216,11 @@ body {
   background: #333;
 }
 
+.submit-btn:not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+
 .answer-notice {
   font-size: 12px;
   color: #bbb;
@@ -251,6 +237,7 @@ body {
   background: #f9f9f8;
   border-radius: 14px;
   text-align: center;
+  animation: fadeUp 0.35s ease both;
 }
 
 .check-icon {
@@ -264,6 +251,7 @@ body {
   justify-content: center;
   font-size: 20px;
   margin-bottom: 16px;
+  animation: checkPop 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
 }
 
 .submitted-title {
@@ -353,6 +341,7 @@ body {
   background: #fff;
   border: 1px solid #e8e8e5;
   border-radius: 12px;
+  animation: fadeUp 0.35s ease both;
 }
 
 .answer-index {
@@ -723,10 +712,7 @@ body {
   .header     { padding: 18px 20px; }
   .clock-bar  { padding: 8px 20px; }
   .main       { padding: 40px 20px 40px; }
-  .question-text  { font-size: 21px; padding: 0 20px; }
-  .question-carousel { margin: 0 -20px; }
-  .question-peek { flex: 0 0 48px; }
-  .question-peek-text { font-size: 21px; }
+  .question-text  { font-size: 21px; }
   .preview-card   { padding: 28px 24px; }
   .submitted-card { padding: 32px 20px; }
 }
