@@ -300,6 +300,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
         <div className="submitted-card">
           <div className="check-icon">✓</div>
           <p className="submitted-title">답변이 제출되었습니다.</p>
+          <p className="submitted-notice">오후 9시 전까지 언제든 수정할 수 있어요.</p>
           <div className="answer-box">
             <p className="answer-box-label">내 답변</p>
             <p className="answer-box-text">{myAnswer}</p>
@@ -353,7 +354,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
         <button type="submit" className="submit-btn" disabled={!content.trim() || submitting}>
           {submitting ? '제출 중…' : myAnswer ? '수정 완료' : '제출하기'}
         </button>
-        <p className="answer-notice">오늘 자정까지 수정할 수 있습니다.</p>
+        <p className="answer-notice">하루 한 번, 오후 9시까지 수정할 수 있습니다.</p>
       </form>
     </section>
   );

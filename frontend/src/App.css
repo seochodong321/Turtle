@@ -231,6 +231,12 @@ body {
   margin-bottom: 24px;
 }
 
+.submitted-notice {
+  font-size: 13px;
+  color: #bbb;
+  margin-bottom: 16px;
+}
+
 .submitted-sub {
   font-size: 13px;
   color: #aaa;
