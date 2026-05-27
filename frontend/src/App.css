@@ -81,13 +81,45 @@ body {
   margin-bottom: 14px;
 }
 
+/* 캐러셀: 가운데 오늘, 양쪽에 어제/내일 peek */
+.question-carousel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  /* main padding 32px을 돌파해 화면 끝까지 확장 */
+  margin: 0 -32px;
+}
+
 .question-text {
+  flex: 1;
+  min-width: 0;
+  padding: 0 32px;
   font-size: 24px;
   font-weight: 700;
   line-height: 1.5;
   letter-spacing: -0.03em;
   color: #111;
   word-break: keep-all;
+}
+
+.question-peek {
+  flex: 0 0 52px;
+  overflow: hidden;
+  opacity: 0.09;
+  pointer-events: none;
+  padding-top: 3px;
+}
+
+.question-peek-text {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: #111;
+  word-break: keep-all;
+  white-space: normal;
 }
 
 /* ── 페이즈 공통 ─────────────────────────────────────────────────────────── */
@@ -681,7 +713,10 @@ body {
   .header     { padding: 18px 20px; }
   .clock-bar  { padding: 8px 20px; }
   .main       { padding: 40px 20px 40px; }
-  .question-text  { font-size: 21px; }
+  .question-text  { font-size: 21px; padding: 0 20px; }
+  .question-carousel { margin: 0 -20px; }
+  .question-peek { flex: 0 0 36px; }
+  .question-peek-text { font-size: 21px; }
   .preview-card   { padding: 28px 24px; }
   .submitted-card { padding: 32px 20px; }
 }

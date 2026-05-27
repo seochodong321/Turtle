@@ -122,6 +122,8 @@ function PhaseGuide({ currentPhase }) {
 export default function App() {
   const [phase, setPhase]                 = useState(calcPhase);
   const [question, setQuestion]           = useState(null);
+  const [prevQuestion, setPrevQuestion]   = useState(null);
+  const [nextQuestion, setNextQuestion]   = useState(null);
   const [answers, setAnswers]             = useState([]);
   const [answerCount, setAnswerCount]     = useState(null);
   const [pastQuestions, setPastQuestions] = useState([]);
@@ -140,6 +142,8 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
+      setPrevQuestion(data.prevQuestion || null);
+      setNextQuestion(data.nextQuestion || null);
       if (data.myAnswer) {
         setMyAnswer(data.myAnswer);
         setContent(data.myAnswer);
@@ -240,7 +244,15 @@ export default function App() {
           <>
             <section className="question-block">
               <p className="question-meta">오늘의 질문</p>
-              <h1 className="question-text">{question?.question}</h1>
+              <div className="question-carousel">
+                <div className="question-peek" aria-hidden="true">
+                  {prevQuestion && <span className="question-peek-text">{prevQuestion.question}</span>}
+                </div>
+                <h1 className="question-text">{question?.question}</h1>
+                <div className="question-peek" aria-hidden="true">
+                  {nextQuestion && <span className="question-peek-text">{nextQuestion.question}</span>}
+                </div>
+              </div>
             </section>
 
             {phase === 'preview' && <PreviewPhase />}
