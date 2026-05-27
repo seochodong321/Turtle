@@ -32,7 +32,8 @@ const PHASE_LABEL = {
 
 // ── 오후 9시까지 카운트다운 훅 ────────────────────────────────────────────────
 
-function useCountdownTo21() {
+// targetHour: 21 = 답변 마감, 24 = 자정(리뷰 종료)
+function useCountdownToHour(targetHour) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
@@ -40,7 +41,7 @@ function useCountdownTo21() {
       const now = new Date();
       const kst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
       const end = new Date(kst);
-      end.setHours(21, 0, 0, 0);
+      end.setHours(targetHour, 0, 0, 0);
 
       const diff = end - kst;
       if (diff <= 0) { setRemaining(''); return; }
@@ -58,7 +59,7 @@ function useCountdownTo21() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [targetHour]);
 
   return remaining;
 }
@@ -294,7 +295,7 @@ function PreviewPhase() {
 }
 
 function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, answerCount }) {
-  const countdown = useCountdownTo21();
+  const countdown = useCountdownToHour(21);
   const charCount = content.length;
 
   if (submitted) {
@@ -362,8 +363,16 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
 }
 
 function ReviewPhase({ myAnswer, answers }) {
+  const countdown = useCountdownToHour(24);
+
   return (
     <section className="phase-block">
+      {countdown && (
+        <div className="deadline-bar deadline-review">
+          <span className="deadline-label">리뷰 종료까지</span>
+          <span className="deadline-time">{countdown}</span>
+        </div>
+      )}
       {myAnswer && (
         <div className="answer-box review-mine">
           <p className="answer-box-label">내 답변</p>
@@ -401,7 +410,7 @@ function PastQuestions({ questions }) {
       </div>
       <ul className="past-list">
         {questions.map(q => (
-          <li key={q.id} className="past-item">
+          <li key={q.date} className="past-item">
             <div className="past-item-top">
               <span className="past-date">{formatKSTDate(q.date)}</span>
               {q.answerCount > 0 && (

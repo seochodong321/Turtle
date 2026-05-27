@@ -442,6 +442,11 @@ body {
   flex: 1;
 }
 
+/* 리뷰 페이즈 — 초록 계열 */
+.deadline-review { background: #f0fdf4; border-color: #bbf7d0; }
+.deadline-review .deadline-label { color: #15803d; }
+.deadline-review .deadline-time  { color: #16a34a; }
+
 .deadline-participants {
   font-size: 12px;
   font-weight: 500;
