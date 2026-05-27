@@ -21,9 +21,9 @@ function formatKSTDate(dateStr) {
 }
 
 const PHASE_LABEL = {
-  preview: '준비 중',
+  preview: '답변 준비',
   answer:  '답변 시간',
-  review:  '리뷰 시간',
+  review:  '리뷰&스터디 시간',
 };
 
 // ── 카운트다운 훅 ─────────────────────────────────────────────────────────────
@@ -93,9 +93,9 @@ function LiveClock() {
 // ── 이용 안내 ─────────────────────────────────────────────────────────────────
 
 const GUIDE_ITEMS = [
-  { phase: 'preview', time: '자정 – 오전 9시',    desc: '질문을 읽고 혼자 생각을 정리하는 시간' },
-  { phase: 'answer',  time: '오전 9시 – 오후 9시', desc: '나만의 답변을 작성하고 제출하는 시간' },
-  { phase: 'review',  time: '오후 9시 – 자정',    desc: '참여자들의 답변을 확인하고 비교하는 시간' },
+  { phase: 'preview', time: '자정 – 오전 9시',    desc: '오늘의 질문을 읽고 혼자 생각을 정리하는 시간' },
+  { phase: 'answer',  time: '오전 9시 – 오후 9시', desc: '오늘의 질문에 나만의 답변을 작성하고 제출하는 시간' },
+  { phase: 'review',  time: '오후 9시 – 자정',    desc: '기획자들의 답변을 확인하고, 비교하며 공부하는 시간' },
 ];
 
 function PhaseGuide({ currentPhase }) {
@@ -283,8 +283,8 @@ function PreviewPhase() {
   return (
     <section className="phase-block">
       <div className="preview-card">
-        <p className="preview-title">답변은 오전 9시에 시작됩니다.</p>
-        <p className="preview-sub">지금은 질문을 읽고 천천히 생각을 정리해보세요.</p>
+        <p className="preview-title">답변은 오전 9시부터 제출할 수 있어요.</p>
+        <p className="preview-sub">지금은 천천히 질문을 생각하며 답변을 정리해 보세요.</p>
       </div>
     </section>
   );
@@ -299,7 +299,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
       <section className="phase-block">
         <div className="submitted-card">
           <div className="check-icon">✓</div>
-          <p className="submitted-title">답변이 제출되었습니다.</p>
+          <p className="submitted-title">오늘의 답변이 제출되었습니다.</p>
           <p className="submitted-notice">오후 9시 전까지 언제든 수정할 수 있어요.</p>
           <div className="answer-box">
             <p className="answer-box-label">내 답변</p>
@@ -318,7 +318,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
               &nbsp;남았습니다.
             </p>
           ) : (
-            <p className="submitted-sub">오후 9시 이후에 다른 참여자의 답변을 확인할 수 있습니다.</p>
+            <p className="submitted-sub">오후 9시 이후부터 자정까지 다른 기획자의 답변을 확인할 수 있어요.</p>
           )}
         </div>
       </section>
@@ -354,7 +354,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
         <button type="submit" className="submit-btn" disabled={!content.trim() || submitting}>
           {submitting ? '제출 중…' : myAnswer ? '수정 완료' : '제출하기'}
         </button>
-        <p className="answer-notice">하루 한 번, 오후 9시까지 수정할 수 있습니다.</p>
+        <p className="answer-notice">오후 9시까지, 딱 한 번 수정할 수 있습니다.</p>
       </form>
     </section>
   );
@@ -382,7 +382,7 @@ function ReviewPhase({ myAnswer, answers }) {
         <span className="answers-count">{answers.length}개</span>
       </div>
       {answers.length === 0 ? (
-        <div className="empty-answers">아직 제출된 답변이 없습니다.</div>
+        <div className="empty-answers">고민중이신가요? 아직 제출된 답변이 없습니다.</div>
       ) : (
         <ul className="answers-list">
           {answers.map((a, i) => (
