@@ -1,6 +1,6 @@
 const { Redis } = require('@upstash/redis');
 const { v4: uuidv4 } = require('uuid');
-const { getKSTDateStr, getPhase, secondsUntilMidnightKST } = require('./_utils');
+const { getKSTDateStr, getPhase } = require('./_utils');
 
 const redis = Redis.fromEnv();
 
@@ -27,15 +27,14 @@ module.exports = async (req, res) => {
 
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
   const today = getKSTDateStr();
+  const ipKey = `answer:${ip}:${today}`;
 
   try {
-    const rlKey = `rl:${ip}:${today}`;
-    const already = await redis.get(rlKey);
-    if (already) {
-      return res.status(429).json({ error: '하루에 하나의 답변만 제출할 수 있습니다.' });
-    }
+    const [existing, prevAnswer] = await Promise.all([
+      redis.get(`answers:${today}`),
+      redis.get(ipKey),
+    ]);
 
-    const existing = (await redis.get(`answers:${today}`)) || [];
     const newAnswer = {
       id: uuidv4(),
       questionId: today,
@@ -43,9 +42,12 @@ module.exports = async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
+    // 기존 답변이 있으면 풀에서 제거 후 교체
+    const pool = (existing || []).filter(a => !prevAnswer || a.id !== prevAnswer.id);
+
     await Promise.all([
-      redis.set(`answers:${today}`, [...existing, newAnswer]),
-      redis.set(rlKey, 1, { ex: secondsUntilMidnightKST() }),
+      redis.set(`answers:${today}`, [...pool, newAnswer]),
+      redis.set(ipKey, newAnswer),
     ]);
 
     res.json({ success: true, answer: newAnswer });

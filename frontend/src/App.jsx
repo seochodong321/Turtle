@@ -2,10 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 // ── 시간 & 페이즈 헬퍼 ────────────────────────────────────────────────────────
 
-function getKSTDateStr() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-}
-
 function getKSTHour() {
   const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
   return kst.getHours();
@@ -30,9 +26,8 @@ const PHASE_LABEL = {
   review:  '리뷰 시간',
 };
 
-// ── 오후 9시까지 카운트다운 훅 ────────────────────────────────────────────────
+// ── 카운트다운 훅 ─────────────────────────────────────────────────────────────
 
-// targetHour: 21 = 답변 마감, 24 = 자정(리뷰 종료)
 function useCountdownToHour(targetHour) {
   const [remaining, setRemaining] = useState('');
 
@@ -137,7 +132,6 @@ export default function App() {
   const [errorMsg, setErrorMsg]           = useState('');
   const [submitting, setSubmitting]       = useState(false);
 
-  const todayKey = `answer_${getKSTDateStr()}`;
   const MAX_CHARS = 500;
 
   const fetchQuestion = useCallback(async () => {
@@ -146,6 +140,11 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
+      if (data.myAnswer) {
+        setMyAnswer(data.myAnswer);
+        setContent(data.myAnswer);
+        setSubmitted(true);
+      }
       setStatus('ready');
     } catch (e) {
       setErrorMsg(e.message || '서버에 연결할 수 없습니다.');
@@ -173,9 +172,6 @@ export default function App() {
     fetchQuestion();
     fetchPastQuestions();
 
-    const saved = localStorage.getItem(todayKey);
-    if (saved) { setSubmitted(true); setMyAnswer(saved); }
-
     const tick = setInterval(() => {
       setPhase(prev => {
         const next = calcPhase();
@@ -184,10 +180,9 @@ export default function App() {
     }, 30_000);
 
     return () => clearInterval(tick);
-  }, [fetchQuestion, fetchPastQuestions, todayKey]);
+  }, [fetchQuestion, fetchPastQuestions]);
 
   useEffect(() => {
-    // 답변 시간엔 count만, 리뷰 시간엔 전체 목록 로드
     if (phase === 'answer' || phase === 'review') fetchAnswers();
   }, [phase, fetchAnswers]);
 
@@ -205,9 +200,9 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      localStorage.setItem(todayKey, content.trim());
       setMyAnswer(content.trim());
       setSubmitted(true);
+      fetchAnswers();
     } catch (e) {
       alert(e.message || '제출에 실패했습니다. 다시 시도해주세요.');
     } finally {
@@ -258,6 +253,7 @@ export default function App() {
                 maxChars={MAX_CHARS}
                 submitting={submitting}
                 onSubmit={handleSubmit}
+                onEdit={() => setSubmitted(false)}
                 answerCount={answerCount}
               />
             )}
@@ -294,7 +290,7 @@ function PreviewPhase() {
   );
 }
 
-function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, answerCount }) {
+function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, onEdit, answerCount }) {
   const countdown = useCountdownToHour(21);
   const charCount = content.length;
 
@@ -308,6 +304,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
             <p className="answer-box-label">내 답변</p>
             <p className="answer-box-text">{myAnswer}</p>
           </div>
+          <button className="edit-btn" onClick={onEdit}>수정하기</button>
           {answerCount !== null && (
             <p className="submitted-participants">
               오늘 <span className="participants-count">{answerCount}명</span>이 답변했습니다.
@@ -354,9 +351,9 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
           </span>
         </div>
         <button type="submit" className="submit-btn" disabled={!content.trim() || submitting}>
-          {submitting ? '제출 중…' : '제출하기'}
+          {submitting ? '제출 중…' : myAnswer ? '수정 완료' : '제출하기'}
         </button>
-        <p className="answer-notice">제출 후에는 수정이 불가합니다.</p>
+        <p className="answer-notice">오늘 자정까지 수정할 수 있습니다.</p>
       </form>
     </section>
   );
@@ -418,6 +415,12 @@ function PastQuestions({ questions }) {
               )}
             </div>
             <p className="past-question">{q.question}</p>
+            {q.myAnswer && (
+              <div className="past-my-answer">
+                <span className="past-my-label">내 답변</span>
+                <p className="past-my-text">{q.myAnswer}</p>
+              </div>
+            )}
           </li>
         ))}
       </ul>

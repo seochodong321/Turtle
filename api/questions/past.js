@@ -12,6 +12,7 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
 
@@ -21,8 +22,15 @@ module.exports = async (req, res) => {
 
     const past = await Promise.all(
       pastQuestions.map(async q => {
-        const answers = (await redis.get(`answers:${q.date}`)) || [];
-        return { ...q, answerCount: answers.length };
+        const [answers, myAnswer] = await Promise.all([
+          redis.get(`answers:${q.date}`),
+          redis.get(`answer:${ip}:${q.date}`),
+        ]);
+        return {
+          ...q,
+          answerCount: (answers || []).length,
+          myAnswer: myAnswer?.content || null,
+        };
       })
     );
 

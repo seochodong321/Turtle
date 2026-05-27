@@ -1,8 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const { Redis } = require('@upstash/redis');
 const { getKSTDateStr, getPhase } = require('../_utils');
 
-module.exports = (req, res) => {
+const redis = Redis.fromEnv();
+
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'GET') {
@@ -19,7 +22,10 @@ module.exports = (req, res) => {
       return res.status(404).json({ error: '오늘의 질문이 준비되지 않았습니다.' });
     }
 
-    res.json({ question, phase: getPhase(), today });
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const myAnswer = await redis.get(`answer:${ip}:${today}`);
+
+    res.json({ question, phase: getPhase(), today, myAnswer: myAnswer?.content || null });
   } catch (err) {
     console.error('[question/today]', err?.message);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });

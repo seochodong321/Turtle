@@ -638,6 +638,53 @@ body {
   font-weight: 500;
 }
 
+/* ── 수정하기 버튼 ───────────────────────────────────────────────────────── */
+.edit-btn {
+  padding: 9px 22px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  background: transparent;
+  color: #888;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  margin-top: 4px;
+}
+
+.edit-btn:hover {
+  border-color: #aaa;
+  color: #333;
+}
+
+/* ── 지난 기록 내 내 답변 ─────────────────────────────────────────────────── */
+.past-my-answer {
+  margin-top: 10px;
+  padding: 11px 14px;
+  background: #f7f7f5;
+  border-radius: 8px;
+  border-left: 2px solid #d8d8d4;
+}
+
+.past-my-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #bbb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.past-my-text {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
 /* ── 반응형 ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .header     { padding: 18px 20px; }
