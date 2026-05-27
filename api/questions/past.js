@@ -1,21 +1,17 @@
 const { Redis } = require('@upstash/redis');
 const fs = require('fs');
 const path = require('path');
+const { getKSTDateStr } = require('../_utils');
 
 const redis = Redis.fromEnv();
-
-function getKSTDateStr() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const today = getKSTDateStr();
-
   try {
+    const today = getKSTDateStr();
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
 
@@ -31,7 +27,8 @@ module.exports = async (req, res) => {
     );
 
     res.json({ questions: past });
-  } catch {
+  } catch (err) {
+    console.error('[questions/past]', err?.message);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };

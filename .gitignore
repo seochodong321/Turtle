@@ -36,3 +36,6 @@ vite.config.js.timestamp-*
 *.tsbuildinfo
 .npm
 .eslintcache
+
+# Local data (real user answers — never commit)
+data/answers.json

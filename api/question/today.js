@@ -1,21 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-
-function getKSTDateStr() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-}
-
-function getKSTHour() {
-  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-  return kst.getHours();
-}
-
-function getPhase() {
-  const h = getKSTHour();
-  if (h < 9)  return 'preview';
-  if (h < 21) return 'answer';
-  return 'review';
-}
+const { getKSTDateStr, getPhase } = require('../_utils');
 
 module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,9 +9,8 @@ module.exports = (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const today = getKSTDateStr();
-
   try {
+    const today = getKSTDateStr();
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
     const question = questions.find(q => q.date === today);
@@ -36,7 +20,8 @@ module.exports = (req, res) => {
     }
 
     res.json({ question, phase: getPhase(), today });
-  } catch {
+  } catch (err) {
+    console.error('[question/today]', err?.message);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };

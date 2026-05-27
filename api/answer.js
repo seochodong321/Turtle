@@ -1,23 +1,8 @@
 const { Redis } = require('@upstash/redis');
 const { v4: uuidv4 } = require('uuid');
+const { getKSTDateStr, getPhase, secondsUntilMidnightKST } = require('./_utils');
 
 const redis = Redis.fromEnv();
-
-function getKSTDateStr() {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-}
-
-function getKSTHour() {
-  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-  return kst.getHours();
-}
-
-function getPhase() {
-  const h = getKSTHour();
-  if (h < 9)  return 'preview';
-  if (h < 21) return 'answer';
-  return 'review';
-}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -40,18 +25,32 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '답변은 500자 이내로 작성해주세요.' });
   }
 
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
   const today = getKSTDateStr();
-  const key = `answers:${today}`;
 
-  const existing = (await redis.get(key)) || [];
-  const newAnswer = {
-    id: uuidv4(),
-    questionId: today,
-    content: content.trim(),
-    createdAt: new Date().toISOString(),
-  };
+  try {
+    const rlKey = `rl:${ip}:${today}`;
+    const already = await redis.get(rlKey);
+    if (already) {
+      return res.status(429).json({ error: '하루에 하나의 답변만 제출할 수 있습니다.' });
+    }
 
-  await redis.set(key, [...existing, newAnswer]);
+    const existing = (await redis.get(`answers:${today}`)) || [];
+    const newAnswer = {
+      id: uuidv4(),
+      questionId: today,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
 
-  res.json({ success: true, answer: newAnswer });
+    await Promise.all([
+      redis.set(`answers:${today}`, [...existing, newAnswer]),
+      redis.set(rlKey, 1, { ex: secondsUntilMidnightKST() }),
+    ]);
+
+    res.json({ success: true, answer: newAnswer });
+  } catch (err) {
+    console.error('[answer]', err?.message);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
 };
