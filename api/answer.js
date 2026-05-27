@@ -5,7 +5,7 @@ const { getKSTDateStr, getPhase, getClientIP } = require('./_utils');
 const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://turtle-ecru.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
