@@ -223,7 +223,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <span className="brand"></span>
+        <div className="brand">
+          <span className="brand-name">TURTLE</span>
+          <span className="brand-sub">기획자의 감각훈련소</span>
+        </div>
         <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
       </header>
 
@@ -271,7 +274,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>매일 하나의 질문. 생각을 훈련합니다.</p>
+        <p>매일 하나의 질문. 기획자의 감각을 훈련합니다.</p>
       </footer>
     </div>
   );
@@ -382,7 +385,7 @@ function ReviewPhase({ myAnswer, answers }) {
         <span className="answers-count">{answers.length}개</span>
       </div>
       {answers.length === 0 ? (
-        <div className="empty-answers">고민중이신가요? 아직 제출된 답변이 없습니다.</div>
+        <div className="empty-answers">아직 제출된 답변이 없습니다.</div>
       ) : (
         <ul className="answers-list">
           {answers.map((a, i) => (
