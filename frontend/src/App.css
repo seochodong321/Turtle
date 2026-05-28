@@ -290,6 +290,13 @@ body {
   transition-duration: 0.08s;
 }
 
+.submit-error {
+  font-size: 13px;
+  color: #e04040;
+  text-align: center;
+  margin: -4px 0 4px;
+}
+
 .answer-notice {
   font-size: 12px;
   color: #bbb;

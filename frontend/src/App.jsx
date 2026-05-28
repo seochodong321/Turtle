@@ -234,6 +234,7 @@ export default function App() {
   const [status, setStatus]               = useState('loading');
   const [errorMsg, setErrorMsg]           = useState('');
   const [submitting, setSubmitting]       = useState(false);
+  const [submitError, setSubmitError]     = useState('');
 
   const userKeyRef = useRef(null);
   const [pastExpanded, setPastExpanded] = useState(false);
@@ -313,6 +314,7 @@ export default function App() {
     if (!content.trim() || submitting) return;
 
     setSubmitting(true);
+    setSubmitError('');
     try {
       const res  = await fetch(`${API_BASE}/api/answer`, {
         method: 'POST',
@@ -326,7 +328,7 @@ export default function App() {
       setSubmitted(true);
       fetchAnswers();
     } catch (e) {
-      alert(e.message || '제출에 실패했습니다. 다시 시도해주세요.');
+      setSubmitError(e.message || '제출에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -384,9 +386,10 @@ export default function App() {
                 maxChars={MAX_CHARS}
                 submitting={submitting}
                 onSubmit={handleSubmit}
-                onEdit={() => setSubmitted(false)}
+                onEdit={() => { setSubmitted(false); setSubmitError(''); }}
                 answerCount={answerCount}
                 streak={streak}
+                submitError={submitError}
               />
             )}
             {phase === 'review'  && (
@@ -444,7 +447,7 @@ function PreviewPhase() {
   );
 }
 
-function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, onEdit, answerCount, streak }) {
+function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, onEdit, answerCount, streak, submitError }) {
   const countdown = useCountdownToHour(21);
   const charCount = content.length;
 
@@ -513,6 +516,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
         <button type="submit" className="submit-btn" disabled={!content.trim() || submitting}>
           {submitting ? '제출 중…' : myAnswer ? '수정 완료' : '제출하기'}
         </button>
+        {submitError && <p className="submit-error">{submitError}</p>}
         <p className="answer-notice">오후 9시까지 자유롭게 수정할 수 있습니다.</p>
       </form>
     </section>
