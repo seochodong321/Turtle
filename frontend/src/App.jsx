@@ -357,7 +357,7 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
         <button type="submit" className="submit-btn" disabled={!content.trim() || submitting}>
           {submitting ? '제출 중…' : myAnswer ? '수정 완료' : '제출하기'}
         </button>
-        <p className="answer-notice">오후 9시까지, 딱 한 번 수정할 수 있습니다.</p>
+        <p className="answer-notice">오후 9시까지 자유롭게 수정할 수 있습니다.</p>
       </form>
     </section>
   );
