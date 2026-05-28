@@ -20,19 +20,23 @@ module.exports = async (req, res) => {
       .filter(q => q.date < today)
       .sort((a, b) => b.date.localeCompare(a.date));
 
-    const past = await Promise.all(
-      pastQuestions.map(async q => {
-        const [answers, myAnswer] = await Promise.all([
-          redis.get(`answers:${q.date}`),
-          redis.get(`answer:${ip}:${q.date}`),
-        ]);
-        return {
-          ...q,
-          answerCount: (answers || []).length,
-          myAnswer: myAnswer?.content || null,
-        };
-      })
-    );
+    if (pastQuestions.length === 0) {
+      return res.json({ questions: [] });
+    }
+
+    const poolKeys = pastQuestions.map(q => `answers:${q.date}`);
+    const myKeys   = pastQuestions.map(q => `answer:${ip}:${q.date}`);
+
+    const [poolResults, myResults] = await Promise.all([
+      redis.mget(...poolKeys),
+      redis.mget(...myKeys),
+    ]);
+
+    const past = pastQuestions.map((q, i) => ({
+      ...q,
+      answerCount: (poolResults[i] || []).length,
+      myAnswer: myResults[i]?.content || null,
+    }));
 
     res.json({ questions: past });
   } catch (err) {
