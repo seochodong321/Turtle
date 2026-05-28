@@ -38,12 +38,10 @@ function getUserId(req) {
   return getClientIP(req);
 }
 
-// Toss 미니앱 WebView(null origin) + 기존 Vercel 웹 모두 허용
+// Toss 미니앱 WebView + 기존 Vercel 웹 모두 허용
+// 쿠키 미사용, x-user-key 커스텀 헤더 기반 인증이므로 * 허용 안전
 function setCORSHeaders(req, res, methods = 'GET, OPTIONS') {
-  const origin = req.headers['origin'];
-  const allowed = 'https://turtle-ecru.vercel.app';
-  // origin 없음(WebView native) 또는 허용 도메인이면 그대로, 아니면 허용 도메인 고정
-  res.setHeader('Access-Control-Allow-Origin', (!origin || origin === allowed) ? (origin || '*') : allowed);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', methods);
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
 }
