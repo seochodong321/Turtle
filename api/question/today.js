@@ -1,14 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const { Redis } = require('@upstash/redis');
-const { getKSTDateStr, getPhase, getUserId } = require('../_utils');
+const { getKSTDateStr, getPhase, getUserId, setCORSHeaders } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://turtle-ecru.vercel.app');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
+  setCORSHeaders(req, res, 'GET, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {

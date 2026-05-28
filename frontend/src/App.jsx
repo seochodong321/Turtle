@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAnonymousKey } from '@apps-in-toss/web-framework';
 
+// 개발(vite proxy): 상대 URL / 빌드(ait build): Vercel 절대 URL
+const API_BASE = import.meta.env.PROD ? 'https://turtle-ecru.vercel.app' : '';
+
 // ── 시간 & 페이즈 헬퍼 ────────────────────────────────────────────────────────
 
 function getKSTHour() {
@@ -156,7 +159,7 @@ export default function App() {
     try {
       const headers = {};
       if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
-      const res  = await fetch('/api/question/today', { headers });
+      const res  = await fetch(`${API_BASE}/api/question/today`, { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
@@ -174,7 +177,7 @@ export default function App() {
 
   const fetchAnswers = useCallback(async () => {
     try {
-      const res  = await fetch('/api/answers/today');
+      const res  = await fetch(`${API_BASE}/api/answers/today`);
       const data = await res.json();
       if (res.ok) { setAnswers(data.answers); setAnswerCount(data.count); }
     } catch {}
@@ -184,7 +187,7 @@ export default function App() {
     try {
       const headers = {};
       if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
-      const res  = await fetch('/api/questions/past', { headers });
+      const res  = await fetch(`${API_BASE}/api/questions/past`, { headers });
       const data = await res.json();
       if (res.ok) setPastQuestions(data.questions);
     } catch {}
@@ -214,7 +217,7 @@ export default function App() {
 
     setSubmitting(true);
     try {
-      const res  = await fetch('/api/answer', {
+      const res  = await fetch(`${API_BASE}/api/answer`, {
         method: 'POST',
         headers: userHeaders(),
         body: JSON.stringify({ content: content.trim() }),
