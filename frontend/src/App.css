@@ -5,7 +5,10 @@
   padding: 0;
 }
 
-html { font-size: 16px; }
+html {
+  font-size: 16px;
+  color-scheme: light; /* 다크모드 방지 — 체크리스트: 라이트 모드 고정 */
+}
 
 body {
   font-family:
