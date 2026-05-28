@@ -137,29 +137,20 @@ export default function App() {
   const [submitting, setSubmitting]       = useState(false);
 
   const userKeyRef = useRef(null);
+  const [pastExpanded, setPastExpanded] = useState(false);
 
   const MAX_CHARS = 500;
+  const PAST_LIMIT = 10;
 
-  // 앱인토스 환경에서 사용자 고유 해시 취득 (웹 환경에서는 undefined → IP 폴백)
-  useEffect(() => {
-    getAnonymousKey().then(result => {
-      if (result && result !== 'ERROR' && result.hash) {
-        userKeyRef.current = result.hash;
-      }
-    }).catch(() => {});
-  }, []);
-
-  function userHeaders() {
-    const h = { 'Content-Type': 'application/json' };
+  function userHeaders(extra = {}) {
+    const h = { ...extra };
     if (userKeyRef.current) h['x-user-key'] = userKeyRef.current;
     return h;
   }
 
   const fetchQuestion = useCallback(async () => {
     try {
-      const headers = {};
-      if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
-      const res  = await fetch(`${API_BASE}/api/question/today`, { headers });
+      const res  = await fetch(`${API_BASE}/api/question/today`, { headers: userHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
@@ -185,17 +176,24 @@ export default function App() {
 
   const fetchPastQuestions = useCallback(async () => {
     try {
-      const headers = {};
-      if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
-      const res  = await fetch(`${API_BASE}/api/questions/past`, { headers });
+      const res  = await fetch(`${API_BASE}/api/questions/past`, { headers: userHeaders() });
       const data = await res.json();
       if (res.ok) setPastQuestions(data.questions);
     } catch {}
   }, []);
 
+  // getAnonymousKey 먼저 → 완료 후 데이터 fetch (race condition 방지)
   useEffect(() => {
-    fetchQuestion();
-    fetchPastQuestions();
+    const init = async () => {
+      try {
+        const result = await getAnonymousKey();
+        if (result && result !== 'ERROR' && result.hash) {
+          userKeyRef.current = result.hash;
+        }
+      } catch {}
+      await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+    };
+    init();
 
     const tick = setInterval(() => {
       setPhase(prev => {
@@ -219,7 +217,7 @@ export default function App() {
     try {
       const res  = await fetch(`${API_BASE}/api/answer`, {
         method: 'POST',
-        headers: userHeaders(),
+        headers: userHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ content: content.trim() }),
       });
       const data = await res.json();
@@ -292,7 +290,12 @@ export default function App() {
             <PhaseGuide currentPhase={phase} />
 
             {pastQuestions.length > 0 && (
-              <PastQuestions questions={pastQuestions} />
+              <PastQuestions
+                questions={pastExpanded ? pastQuestions : pastQuestions.slice(0, PAST_LIMIT)}
+                total={pastQuestions.length}
+                expanded={pastExpanded}
+                onExpand={() => setPastExpanded(true)}
+              />
             )}
           </>
         )}
@@ -427,12 +430,12 @@ function ReviewPhase({ myAnswer, answers }) {
 
 // ── 지난 훈련 기록 ────────────────────────────────────────────────────────────
 
-function PastQuestions({ questions }) {
+function PastQuestions({ questions, total, expanded, onExpand }) {
   return (
     <section className="past-section">
       <div className="past-header">
         <span className="past-title">지난 훈련 기록</span>
-        <span className="past-total">{questions.length}개</span>
+        <span className="past-total">{total}개</span>
       </div>
       <ul className="past-list">
         {questions.map(q => (
@@ -453,6 +456,11 @@ function PastQuestions({ questions }) {
           </li>
         ))}
       </ul>
+      {!expanded && total > questions.length && (
+        <button className="more-btn" onClick={onExpand}>
+          이전 기록 더 보기 ({total - questions.length}개)
+        </button>
+      )}
     </section>
   );
 }

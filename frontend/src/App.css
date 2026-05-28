@@ -15,6 +15,8 @@ body {
   color: #111;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  /* iOS 홈 인디케이터 safe area */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ── 레이아웃 ────────────────────────────────────────────────────────────── */
@@ -80,7 +82,7 @@ body {
   width: 100%;
   max-width: 680px;
   margin: 0 auto;
-  padding: 56px 32px 48px;
+  padding: 40px 24px 48px;
 }
 
 /* ── 질문 블록 ───────────────────────────────────────────────────────────── */
@@ -178,7 +180,7 @@ body {
   background: #fff;
   border: 1.5px solid #e0e0dc;
   border-radius: 12px;
-  resize: vertical;
+  resize: none;
   outline: none;
   transition: border-color 0.15s;
   word-break: keep-all;
@@ -722,12 +724,35 @@ body {
   word-break: keep-all;
 }
 
+/* ── 더보기 버튼 ─────────────────────────────────────────────────────────── */
+.more-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #888;
+  background: transparent;
+  border: 1px solid #e8e8e5;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.more-btn:hover {
+  border-color: #ccc;
+  color: #444;
+}
+
 /* ── 반응형 ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .header     { padding: 18px 20px; }
-  .clock-bar  { padding: 8px 20px; }
-  .main       { padding: 40px 20px 40px; }
+  .header         { padding: 16px 20px; }
+  .clock-bar      { padding: 8px 20px; }
+  .main           { padding: 32px 20px 40px; }
   .question-text  { font-size: 21px; }
-  .preview-card   { padding: 28px 24px; }
+  .preview-card   { padding: 28px 20px; }
   .submitted-card { padding: 32px 20px; }
+  .guide          { padding: 20px; }
 }
