@@ -1,18 +1,21 @@
 const { Redis } = require('@upstash/redis');
 const fs = require('fs');
 const path = require('path');
-const { getKSTDateStr, getClientIP } = require('../_utils');
+const { getKSTDateStr, getUserId } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://turtle-ecru.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
 
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const today = getKSTDateStr();
-    const ip = getClientIP(req);
+    const userId = getUserId(req);
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
 
@@ -25,7 +28,7 @@ module.exports = async (req, res) => {
     }
 
     const poolKeys = pastQuestions.map(q => `answers:${q.date}`);
-    const myKeys   = pastQuestions.map(q => `answer:${ip}:${q.date}`);
+    const myKeys   = pastQuestions.map(q => `answer:${userId}:${q.date}`);
 
     const [poolResults, myResults] = await Promise.all([
       redis.mget(...poolKeys),

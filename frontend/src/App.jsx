@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getAnonymousKey } from '@apps-in-toss/web-framework';
 
 // ── 시간 & 페이즈 헬퍼 ────────────────────────────────────────────────────────
 
@@ -132,11 +133,30 @@ export default function App() {
   const [errorMsg, setErrorMsg]           = useState('');
   const [submitting, setSubmitting]       = useState(false);
 
+  const userKeyRef = useRef(null);
+
   const MAX_CHARS = 500;
+
+  // 앱인토스 환경에서 사용자 고유 해시 취득 (웹 환경에서는 undefined → IP 폴백)
+  useEffect(() => {
+    getAnonymousKey().then(result => {
+      if (result && result !== 'ERROR' && result.hash) {
+        userKeyRef.current = result.hash;
+      }
+    }).catch(() => {});
+  }, []);
+
+  function userHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    if (userKeyRef.current) h['x-user-key'] = userKeyRef.current;
+    return h;
+  }
 
   const fetchQuestion = useCallback(async () => {
     try {
-      const res  = await fetch('/api/question/today');
+      const headers = {};
+      if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
+      const res  = await fetch('/api/question/today', { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
@@ -162,7 +182,9 @@ export default function App() {
 
   const fetchPastQuestions = useCallback(async () => {
     try {
-      const res  = await fetch('/api/questions/past');
+      const headers = {};
+      if (userKeyRef.current) headers['x-user-key'] = userKeyRef.current;
+      const res  = await fetch('/api/questions/past', { headers });
       const data = await res.json();
       if (res.ok) setPastQuestions(data.questions);
     } catch {}
@@ -194,7 +216,7 @@ export default function App() {
     try {
       const res  = await fetch('/api/answer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: userHeaders(),
         body: JSON.stringify({ content: content.trim() }),
       });
       const data = await res.json();

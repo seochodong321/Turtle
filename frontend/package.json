@@ -1,14 +1,17 @@
 {
   "name": "gamsak-frontend",
   "version": "1.0.0",
-  "description": "기획자의 감각훈련소 - Frontend",
+  "description": "기획자의 감각훈련소, 터틀 - Frontend",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "granite dev",
+    "dev:web": "vite",
+    "build": "ait build",
+    "build:web": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@apps-in-toss/web-framework": "^2.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

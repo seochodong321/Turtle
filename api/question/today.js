@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const { Redis } = require('@upstash/redis');
-const { getKSTDateStr, getPhase, getClientIP } = require('../_utils');
+const { getKSTDateStr, getPhase, getUserId } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://turtle-ecru.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
 
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -22,8 +25,8 @@ module.exports = async (req, res) => {
       return res.status(404).json({ error: '오늘의 질문이 준비되지 않았습니다.' });
     }
 
-    const ip = getClientIP(req);
-    const myAnswer = await redis.get(`answer:${ip}:${today}`);
+    const userId = getUserId(req);
+    const myAnswer = await redis.get(`answer:${userId}:${today}`);
 
     res.json({ question, phase: getPhase(), today, myAnswer: myAnswer?.content || null });
   } catch (err) {

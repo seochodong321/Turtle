@@ -1,13 +1,13 @@
 const { Redis } = require('@upstash/redis');
 const { v4: uuidv4 } = require('uuid');
-const { getKSTDateStr, getPhase, getClientIP } = require('./_utils');
+const { getKSTDateStr, getPhase, getUserId } = require('./_utils');
 
 const redis = Redis.fromEnv();
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://turtle-ecru.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -29,14 +29,14 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '답변은 500자 이내로 작성해주세요.' });
   }
 
-  const ip = getClientIP(req);
+  const userId = getUserId(req);
   const today = getKSTDateStr();
-  const ipKey = `answer:${ip}:${today}`;
+  const userKey = `answer:${userId}:${today}`;
 
   try {
     const [existing, prevAnswer] = await Promise.all([
       redis.get(`answers:${today}`),
-      redis.get(ipKey),
+      redis.get(userKey),
     ]);
 
     const pool = existing || [];
@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
     const TTL_90D = 90 * 24 * 60 * 60;
     await Promise.all([
       redis.set(`answers:${today}`, [...filtered, newAnswer], { ex: TTL_90D }),
-      redis.set(ipKey, newAnswer),
+      redis.set(userKey, newAnswer),
     ]);
 
     res.json({ success: true, answer: newAnswer });
