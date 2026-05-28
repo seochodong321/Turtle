@@ -76,6 +76,28 @@ body {
 
 .phase-preview, .phase-answer, .phase-review { /* no overrides */ }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.streak-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  letter-spacing: 0.02em;
+}
+
+/* 제출 완료 카드 스트릭 */
+.streak-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
 /* ── 메인 컨텐츠 ─────────────────────────────────────────────────────────── */
 .main {
   flex: 1;

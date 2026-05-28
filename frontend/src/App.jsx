@@ -79,6 +79,30 @@ function getGlossaryHints(text) {
   return found;
 }
 
+// ── 스트릭 계산 ───────────────────────────────────────────────────────────────
+
+function calcStreak(pastQuestions, todayAnswered) {
+  const kst = d => new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const today = kst(new Date());
+  const answeredSet = new Set(
+    pastQuestions.filter(q => q.myAnswer).map(q => q.date)
+  );
+  if (todayAnswered) {
+    answeredSet.add(today.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }));
+  }
+
+  let streak = 0;
+  const d = new Date(today);
+  if (!todayAnswered) d.setDate(d.getDate() - 1);
+
+  while (true) {
+    const ds = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+    if (answeredSet.has(ds)) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
 // ── 시간 & 페이즈 헬퍼 ────────────────────────────────────────────────────────
 
 function getKSTHour() {
@@ -308,6 +332,8 @@ export default function App() {
     }
   }
 
+  const streak = calcStreak(pastQuestions, !!(submitted || myAnswer));
+
   // ── 렌더 ─────────────────────────────────────────────────────────────────────
 
   if (status === 'loading') {
@@ -325,7 +351,10 @@ export default function App() {
           <span className="brand-name">TURTLE</span>
           <span className="brand-sub">기획자의 감각훈련소</span>
         </div>
-        <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
+        <div className="header-right">
+          {streak >= 2 && <span className="streak-badge">{streak}일 연속</span>}
+          <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
+        </div>
       </header>
 
       <LiveClock />
@@ -357,6 +386,7 @@ export default function App() {
                 onSubmit={handleSubmit}
                 onEdit={() => setSubmitted(false)}
                 answerCount={answerCount}
+                streak={streak}
               />
             )}
             {phase === 'review'  && (
@@ -414,7 +444,7 @@ function PreviewPhase() {
   );
 }
 
-function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, onEdit, answerCount }) {
+function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submitting, onSubmit, onEdit, answerCount, streak }) {
   const countdown = useCountdownToHour(21);
   const charCount = content.length;
 
@@ -423,6 +453,11 @@ function AnswerPhase({ submitted, myAnswer, content, setContent, maxChars, submi
       <section className="phase-block">
         <div className="submitted-card">
           <div className="check-icon">✓</div>
+          {streak >= 1 && (
+            <p className="streak-label">
+              {streak === 1 ? '오늘 첫 훈련 완료!' : `${streak}일 연속 훈련 중`}
+            </p>
+          )}
           <p className="submitted-title">오늘의 답변이 제출되었습니다.</p>
           <p className="submitted-notice">오후 9시 전까지 언제든 수정할 수 있어요.</p>
           <div className="answer-box">
