@@ -110,6 +110,36 @@ body {
   animation: questionReveal 0.7s cubic-bezier(0.25, 0, 0.1, 1) 0.08s both;
 }
 
+/* ── 용어 힌트 ───────────────────────────────────────────────────────────── */
+.glossary-hints {
+  list-style: none;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.glossary-item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.glossary-term {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.glossary-def {
+  font-size: 11px;
+  color: #bbb;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
 /* ── 페이즈 공통 ─────────────────────────────────────────────────────────── */
 .phase-block {
   animation: fadeUp 0.4s ease 0.22s both;

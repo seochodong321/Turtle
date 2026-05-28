@@ -4,6 +4,81 @@ import { getAnonymousKey } from '@apps-in-toss/web-framework';
 // 개발(vite proxy): 상대 URL / 빌드(ait build): Vercel 절대 URL
 const API_BASE = import.meta.env.PROD ? 'https://turtle-ecru.vercel.app' : '';
 
+// ── 용어 사전 ──────────────────────────────────────────────────────────────────
+
+const GLOSSARY = [
+  // 제품 전략
+  { terms: ['MVP'],            def: '최소 기능 제품(Minimum Viable Product). 핵심 기능만 넣어 빠르게 출시하고 시장 반응을 검증하는 초기 제품.' },
+  { terms: ['PMF'],            def: '제품-시장 적합성(Product-Market Fit). 제품이 특정 시장의 필요를 잘 충족하고 있는 상태.' },
+  { terms: ['GTM', 'Go-to-Market'], def: '시장 진입 전략(Go-To-Market). 새 제품·기능을 어떤 타깃에게, 어떤 채널로, 어떤 메시지로 출시할지의 계획.' },
+  { terms: ['피벗', 'Pivot'],  def: '핵심 전제는 유지하되 전략이나 방향을 큰 폭으로 전환하는 것.' },
+  { terms: ['린', 'Lean'],     def: '낭비를 최소화하고 빠른 실험·학습을 반복하는 개발·경영 방법론.' },
+  { terms: ['프로토타입'],      def: '실제 출시 전 아이디어를 검증하기 위해 만드는 초기 시제품. 완성도보다 검증 속도가 목적.' },
+  // 지표
+  { terms: ['DAU'],            def: '일간 활성 사용자 수(Daily Active Users). 하루 동안 서비스를 실제 사용한 유저 수.' },
+  { terms: ['MAU'],            def: '월간 활성 사용자 수(Monthly Active Users). 한 달 동안 서비스를 실제 사용한 유저 수.' },
+  { terms: ['WAU'],            def: '주간 활성 사용자 수(Weekly Active Users). 일주일 동안 서비스를 실제 사용한 유저 수.' },
+  { terms: ['KPI'],            def: '핵심 성과 지표(Key Performance Indicator). 목표 달성 여부를 측정하는 수치 지표.' },
+  { terms: ['OKR'],            def: '목표와 핵심 결과(Objectives & Key Results). 도전적 목표(O)를 세우고 달성 여부를 측정 가능한 결과(KR)로 정의하는 목표 관리 방법.' },
+  { terms: ['NPS'],            def: '순추천지수(Net Promoter Score). "이 서비스를 지인에게 추천하겠냐"로 고객 만족도를 0–10점으로 측정하는 지표.' },
+  { terms: ['ROI'],            def: '투자 대비 수익률(Return on Investment). 투입 비용 대비 얼마나 성과를 냈는지 나타내는 비율.' },
+  { terms: ['CAC'],            def: '고객 획득 비용(Customer Acquisition Cost). 신규 고객 한 명을 유치하는 데 드는 평균 비용.' },
+  { terms: ['LTV', 'CLV'],     def: '고객 생애 가치(Lifetime Value). 한 고객이 서비스를 이용하는 전체 기간에 걸쳐 창출하는 예상 수익.' },
+  { terms: ['GMV'],            def: '총 거래액(Gross Merchandise Volume). 플랫폼에서 일정 기간 발생한 전체 거래 금액.' },
+  { terms: ['ARR'],            def: '연간 반복 매출(Annual Recurring Revenue). 구독 등으로 매년 안정적으로 발생하는 매출.' },
+  { terms: ['MRR'],            def: '월간 반복 매출(Monthly Recurring Revenue). 구독 등으로 매달 안정적으로 발생하는 매출.' },
+  { terms: ['AARRR'],          def: '해적 지표(Acquisition-Activation-Retention-Referral-Revenue). 사용자 유입부터 수익까지 5단계로 성장을 진단하는 프레임워크.' },
+  { terms: ['리텐션', 'Retention'], def: '사용자가 서비스를 계속 사용하는 비율. 높을수록 제품이 습관으로 자리잡았다는 신호.' },
+  { terms: ['이탈률', 'Churn'], def: '일정 기간 서비스를 그만 사용한 사용자의 비율.' },
+  { terms: ['전환율', 'CVR'],  def: '목표 행동(결제·가입 등)을 완료한 사용자의 비율. 퍼널 효율을 나타냄.' },
+  // UX
+  { terms: ['UX'],             def: '사용자 경험(User Experience). 사용자가 제품을 사용하며 느끼는 전반적인 경험.' },
+  { terms: ['UI'],             def: '사용자 인터페이스(User Interface). 사용자가 제품과 상호작용하는 화면·버튼·아이콘 등 시각적 요소.' },
+  { terms: ['CTA'],            def: '행동 유도 요소(Call to Action). 사용자에게 특정 행동을 요청하는 버튼이나 문구. 예: "지금 시작하기".' },
+  { terms: ['와이어프레임'],    def: '화면의 구조와 요소 배치를 단순하게 표현한 설계 도면. 디자인보다 구조·흐름 검토가 목적.' },
+  { terms: ['사용성 테스트'],   def: '실제 사용자가 제품을 쓰는 과정을 관찰해 문제를 발견하는 테스트.' },
+  { terms: ['온보딩', 'Onboarding'], def: '신규 사용자가 서비스의 핵심 가치를 빠르게 경험하도록 안내하는 첫 사용 흐름.' },
+  { terms: ['퍼널', 'Funnel'], def: '사용자가 목표 행동(구매·가입 등)에 이르는 단계별 흐름. 각 단계에서 이탈 원인을 분석할 때 씀.' },
+  { terms: ['유저 저니', 'User Journey'], def: '사용자가 특정 목표를 달성하기까지 겪는 전체 경험과 감정의 흐름을 시각화한 것.' },
+  { terms: ['IA'],             def: '정보 구조(Information Architecture). 서비스 안의 콘텐츠·메뉴를 사용자가 쉽게 찾을 수 있도록 체계화하는 설계.' },
+  { terms: ['A/B 테스트'],     def: '두 가지 버전(A·B)을 실제 사용자에게 동시에 노출해 어느 쪽이 더 나은지 데이터로 검증하는 실험.' },
+  // 개발 프로세스
+  { terms: ['스프린트', 'Sprint'], def: '1–4주의 짧은 주기로 목표를 정해 개발·검증을 반복하는 애자일 사이클.' },
+  { terms: ['백로그', 'Backlog'],  def: '앞으로 개발해야 할 기능·작업의 우선순위 목록.' },
+  { terms: ['애자일', 'Agile'],    def: '짧은 주기로 기획·개발·검증을 반복하며 변화에 유연하게 대응하는 방법론.' },
+  { terms: ['스쿼드', 'Squad'],    def: '특정 목표를 공유하는 소규모 자율 팀. 기획·디자인·개발이 함께 구성.' },
+  // 비즈니스 모델
+  { terms: ['SaaS'],           def: '구독형 소프트웨어 서비스(Software as a Service). 소프트웨어를 설치 없이 월·연 구독으로 사용하는 방식.' },
+  { terms: ['B2B'],            def: '기업 간 거래(Business to Business). 고객이 개인이 아닌 다른 기업인 비즈니스 모델.' },
+  { terms: ['B2C'],            def: '기업-소비자 거래(Business to Consumer). 기업이 일반 소비자에게 직접 제품·서비스를 판매하는 모델.' },
+  { terms: ['B2B2C'],          def: '기업이 다른 기업을 통해 최종 소비자에게 도달하는 복합 비즈니스 모델.' },
+  { terms: ['PM'],             def: '프로덕트 매니저(Product Manager). 제품의 방향과 우선순위를 결정하고 팀을 조율하는 역할.' },
+  { terms: ['PO'],             def: '프로덕트 오너(Product Owner). 스크럼 팀에서 백로그를 관리하고 제품 가치를 책임지는 역할.' },
+  { terms: ['프리미엄', 'Freemium'], def: '기본 기능은 무료로 제공하고 고급 기능에 요금을 부과하는 수익 모델.' },
+];
+
+function getGlossaryHints(text) {
+  if (!text) return [];
+  const found = [];
+  const seen  = new Set();
+  for (const entry of GLOSSARY) {
+    for (const term of entry.terms) {
+      if (seen.has(entry.def)) break;
+      // 단어 경계 처리: 영문은 \b, 한글은 포함 여부로
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = /^[A-Za-z0-9/]/.test(term)
+        ? new RegExp(`\\b${escaped}\\b`)
+        : new RegExp(escaped);
+      if (pattern.test(text)) {
+        found.push({ term: entry.terms[0], def: entry.def });
+        seen.add(entry.def);
+        break;
+      }
+    }
+  }
+  return found;
+}
+
 // ── 시간 & 페이즈 헬퍼 ────────────────────────────────────────────────────────
 
 function getKSTHour() {
@@ -267,6 +342,7 @@ export default function App() {
             <section className="question-block">
               <p className="question-meta">오늘의 질문</p>
               <h1 className="question-text">{question?.question}</h1>
+              <GlossaryHints text={question?.question} />
             </section>
 
             {phase === 'preview' && <PreviewPhase />}
@@ -305,6 +381,23 @@ export default function App() {
         <p>매일 하나의 질문. 기획자의 감각을 훈련합니다.</p>
       </footer>
     </div>
+  );
+}
+
+// ── 용어 힌트 컴포넌트 ───────────────────────────────────────────────────────
+
+function GlossaryHints({ text }) {
+  const hints = getGlossaryHints(text);
+  if (hints.length === 0) return null;
+  return (
+    <ul className="glossary-hints">
+      {hints.map(h => (
+        <li key={h.term} className="glossary-item">
+          <span className="glossary-term">* {h.term}</span>
+          <span className="glossary-def">{h.def}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
