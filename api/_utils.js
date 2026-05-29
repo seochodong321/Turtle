@@ -46,4 +46,8 @@ function setCORSHeaders(req, res, methods = 'GET, OPTIONS') {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-key');
 }
 
-module.exports = { getKSTDateStr, getKSTHour, getPhase, secondsUntilMidnightKST, getClientIP, getUserId, setCORSHeaders };
+function getLevel(source) {
+  return source === 'junior' ? 'junior' : 'senior';
+}
+
+module.exports = { getKSTDateStr, getKSTHour, getPhase, secondsUntilMidnightKST, getClientIP, getUserId, setCORSHeaders, getLevel };

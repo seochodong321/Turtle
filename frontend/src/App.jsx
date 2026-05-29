@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getAnonymousKey, Storage } from '@apps-in-toss/web-framework';
 
 async function saveLevel(lv) {
-  try { await Storage.setItem('userLevel', lv); } catch {}
+  try { await Storage.setItem('userLevel', lv); return; } catch {}
   try { localStorage.setItem('userLevel', lv); } catch {}
 }
 async function loadLevel() {
@@ -245,7 +245,6 @@ export default function App() {
   const [submitError, setSubmitError]     = useState('');
 
   const userKeyRef  = useRef(null);
-  const levelRef    = useRef(null);  // stale closure 방지용
   const [pastExpanded, setPastExpanded] = useState(false);
 
   const MAX_CHARS = 500;
@@ -267,8 +266,7 @@ export default function App() {
     } catch {}
   }
 
-  const fetchQuestion = useCallback(async () => {
-    const lv = levelRef.current;
+  const fetchQuestion = useCallback(async (lv) => {
     try {
       const res  = await fetch(`${API_BASE}/api/question/today?level=${lv}`, { headers: userHeaders() });
       const data = await res.json();
@@ -290,8 +288,7 @@ export default function App() {
     }
   }, []);
 
-  const fetchAnswers = useCallback(async () => {
-    const lv = levelRef.current;
+  const fetchAnswers = useCallback(async (lv) => {
     try {
       const res  = await fetch(`${API_BASE}/api/answers/today?level=${lv}`);
       const data = await res.json();
@@ -299,8 +296,7 @@ export default function App() {
     } catch {}
   }, []);
 
-  const fetchPastQuestions = useCallback(async () => {
-    const lv = levelRef.current;
+  const fetchPastQuestions = useCallback(async (lv) => {
     try {
       const res  = await fetch(`${API_BASE}/api/questions/past?level=${lv}`, { headers: userHeaders() });
       const data = await res.json();
@@ -310,12 +306,11 @@ export default function App() {
 
   // 레벨 선택 처리 (최초 선택 or 전환)
   const selectLevel = useCallback(async (lv) => {
-    levelRef.current = lv;
     setLevel(lv);
-    await saveLevel(lv);
     setStatus('loading');
     setPastExpanded(false);
-    await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+    saveLevel(lv);
+    await Promise.all([fetchQuestion(lv), fetchPastQuestions(lv)]);
   }, [fetchQuestion, fetchPastQuestions]);
 
   // getAnonymousKey + 저장된 레벨 로드 → 데이터 fetch
@@ -324,9 +319,8 @@ export default function App() {
       await ensureUserKey();
       const saved = await loadLevel();
       if (saved) {
-        levelRef.current = saved;
         setLevel(saved);
-        await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+        await Promise.all([fetchQuestion(saved), fetchPastQuestions(saved)]);
       } else {
         setStatus('ready'); // 레벨 미선택 → LevelSelect 화면
       }
@@ -344,7 +338,7 @@ export default function App() {
   }, [fetchQuestion, fetchPastQuestions]);
 
   useEffect(() => {
-    if (level && (phase === 'answer' || phase === 'review')) fetchAnswers();
+    if (level && (phase === 'answer' || phase === 'review')) fetchAnswers(level);
   }, [phase, level, fetchAnswers]);
 
   async function handleSubmit(e) {
@@ -357,7 +351,7 @@ export default function App() {
       const res  = await fetch(`${API_BASE}/api/answer`, {
         method: 'POST',
         headers: userHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ content: content.trim(), level: levelRef.current }),
+        body: JSON.stringify({ content: content.trim(), level }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -379,18 +373,10 @@ export default function App() {
 
   async function handleRetry() {
     await ensureUserKey();
-    await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+    await Promise.all([fetchQuestion(level), fetchPastQuestions(level)]);
   }
 
   // ── 렌더 ─────────────────────────────────────────────────────────────────────
-
-  if (status === 'loading') {
-    return (
-      <div className="app">
-        <div className="center-state"><div className="spinner" /></div>
-      </div>
-    );
-  }
 
   // 레벨 미선택 → 온보딩 화면
   if (!level) {
@@ -398,24 +384,18 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="brand">
-          <span className="brand-name">TURTLE</span>
-          <span className="brand-sub">기획자의 감각훈련소</span>
-        </div>
-        <div className="header-right">
-          {streak >= 2 && <span className="streak-badge">{streak}일 연속</span>}
-          <button
-            className={`level-badge level-${level}`}
-            onClick={() => selectLevel(level === 'junior' ? 'senior' : 'junior')}
-          >
-            {level === 'junior' ? '주니어' : '시니어'}
-          </button>
-          <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
-        </div>
-      </header>
-
+    <AppShell headerExtra={
+      <div className="header-right">
+        {streak >= 2 && <span className="streak-badge">{streak}일 연속</span>}
+        <button
+          className={`level-badge level-${level}`}
+          onClick={() => selectLevel(level === 'junior' ? 'senior' : 'junior')}
+        >
+          {level === 'junior' ? '주니어' : '시니어'}
+        </button>
+        <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
+      </div>
+    }>
       <LiveClock />
 
       <main className="main">
@@ -468,7 +448,23 @@ export default function App() {
           </>
         )}
       </main>
+    </AppShell>
+  );
+}
 
+// ── 공통 레이아웃 ─────────────────────────────────────────────────────────────
+
+function AppShell({ headerExtra, children }) {
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="brand">
+          <span className="brand-name">TURTLE</span>
+          <span className="brand-sub">기획자의 감각훈련소</span>
+        </div>
+        {headerExtra}
+      </header>
+      {children}
       <footer className="footer">
         <p>매일 하나의 질문. 기획자의 감각을 훈련합니다.</p>
       </footer>
@@ -623,13 +619,7 @@ function ReviewPhase({ myAnswer, answers }) {
 
 function LevelSelect({ onSelect }) {
   return (
-    <div className="app">
-      <header className="header">
-        <div className="brand">
-          <span className="brand-name">TURTLE</span>
-          <span className="brand-sub">기획자의 감각훈련소</span>
-        </div>
-      </header>
+    <AppShell>
       <main className="main">
         <section className="level-select">
           <h2 className="level-select-title">나는 어떤 기획자인가요?</h2>
@@ -648,10 +638,7 @@ function LevelSelect({ onSelect }) {
           </div>
         </section>
       </main>
-      <footer className="footer">
-        <p>매일 하나의 질문. 기획자의 감각을 훈련합니다.</p>
-      </footer>
-    </div>
+    </AppShell>
   );
 }
 

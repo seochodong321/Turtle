@@ -1,5 +1,5 @@
 const { Redis } = require('@upstash/redis');
-const { getKSTDateStr, getPhase, setCORSHeaders } = require('../_utils');
+const { getKSTDateStr, getPhase, setCORSHeaders, getLevel } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
-    const level = req.query.level === 'junior' ? 'junior' : 'senior';
+    const level = getLevel(req.query.level);
     const answers = (await redis.get(`answers:${level}:${today}`)) || [];
     res.json({ answers, count: answers.length });
   } catch (err) {

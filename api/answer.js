@@ -1,6 +1,6 @@
 const { Redis } = require('@upstash/redis');
 const { v4: uuidv4 } = require('uuid');
-const { getKSTDateStr, getPhase, getUserId, setCORSHeaders } = require('./_utils');
+const { getKSTDateStr, getPhase, getUserId, setCORSHeaders, getLevel } = require('./_utils');
 
 const redis = Redis.fromEnv();
 
@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '답변은 500자 이내로 작성해주세요.' });
   }
 
-  const level = (req.body || {}).level === 'junior' ? 'junior' : 'senior';
+  const level = getLevel((req.body || {}).level);
   const userId = getUserId(req);
   const today = getKSTDateStr();
   const poolKey = `answers:${level}:${today}`;

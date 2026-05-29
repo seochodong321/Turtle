@@ -1,7 +1,7 @@
 const { Redis } = require('@upstash/redis');
 const fs = require('fs');
 const path = require('path');
-const { getKSTDateStr, getUserId, setCORSHeaders } = require('../_utils');
+const { getKSTDateStr, getUserId, setCORSHeaders, getLevel } = require('../_utils');
 
 const redis = Redis.fromEnv();
 
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
-    const level = req.query.level === 'junior' ? 'junior' : 'senior';
+    const level = getLevel(req.query.level);
     const userId = getUserId(req);
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
