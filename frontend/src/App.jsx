@@ -71,13 +71,9 @@ const COMPILED_GLOSSARY = GLOSSARY.map(entry => ({
 
 function getGlossaryHints(text) {
   if (!text) return [];
-  const found = [];
-  for (const entry of COMPILED_GLOSSARY) {
-    if (entry.patterns.some(p => p.test(text))) {
-      found.push({ term: entry.term, def: entry.def });
-    }
-  }
-  return found;
+  return COMPILED_GLOSSARY
+    .filter(e => e.patterns.some(p => p.test(text)))
+    .map(e => ({ term: e.term, def: e.def }));
 }
 
 // ── 스트릭 계산 ───────────────────────────────────────────────────────────────
@@ -250,7 +246,7 @@ export default function App() {
   }
 
   // getAnonymousKey를 한 번만 실행하고 결과를 캐시 — 다시 시도 시에도 사용
-  const ensureUserKey = useCallback(async () => {
+  async function ensureUserKey() {
     if (userKeyRef.current) return;
     try {
       const result = await getAnonymousKey();
@@ -258,7 +254,7 @@ export default function App() {
         userKeyRef.current = result.hash;
       }
     } catch {}
-  }, []);
+  }
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -310,7 +306,7 @@ export default function App() {
     }, 30_000);
 
     return () => clearInterval(tick);
-  }, [ensureUserKey, fetchQuestion, fetchPastQuestions]);
+  }, [fetchQuestion, fetchPastQuestions]);
 
   useEffect(() => {
     if (phase === 'answer' || phase === 'review') fetchAnswers();
@@ -346,6 +342,11 @@ export default function App() {
     [pastQuestions, submitted, myAnswer]
   );
 
+  async function handleRetry() {
+    await ensureUserKey();
+    await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+  }
+
   // ── 렌더 ─────────────────────────────────────────────────────────────────────
 
   if (status === 'loading') {
@@ -376,7 +377,7 @@ export default function App() {
           <div className="center-state">
             <div className="error-icon">!</div>
             <p className="error-msg">{errorMsg}</p>
-            <button className="retry-btn" onClick={async () => { await ensureUserKey(); fetchQuestion(); }}>다시 시도</button>
+            <button className="retry-btn" onClick={handleRetry}>다시 시도</button>
           </div>
         ) : (
           <>
@@ -430,7 +431,7 @@ export default function App() {
 // ── 용어 힌트 컴포넌트 ───────────────────────────────────────────────────────
 
 function GlossaryHints({ text }) {
-  const hints = getGlossaryHints(text);
+  const hints = useMemo(() => getGlossaryHints(text), [text]);
   if (hints.length === 0) return null;
   return (
     <ul className="glossary-hints">
