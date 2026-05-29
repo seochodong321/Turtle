@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { getAnonymousKey } from '@apps-in-toss/web-framework';
+import { getAnonymousKey, Storage } from '@apps-in-toss/web-framework';
+
+async function saveLevel(lv) {
+  try { await Storage.setItem('userLevel', lv); } catch {}
+  try { localStorage.setItem('userLevel', lv); } catch {}
+}
+async function loadLevel() {
+  try { const v = await Storage.getItem('userLevel'); if (v) return v; } catch {}
+  try { return localStorage.getItem('userLevel') || null; } catch {}
+  return null;
+}
 
 // 개발(vite proxy): 상대 URL / 빌드(ait build): Vercel 절대 URL
 const API_BASE = import.meta.env.PROD ? 'https://turtle-ecru.vercel.app' : '';
@@ -221,6 +231,7 @@ function PhaseGuide({ currentPhase }) {
 
 export default function App() {
   const [phase, setPhase]                 = useState(calcPhase);
+  const [level, setLevel]                 = useState(null);  // null=미선택 'junior'|'senior'
   const [question, setQuestion]           = useState(null);
   const [answers, setAnswers]             = useState([]);
   const [answerCount, setAnswerCount]     = useState(null);
@@ -233,7 +244,8 @@ export default function App() {
   const [submitting, setSubmitting]       = useState(false);
   const [submitError, setSubmitError]     = useState('');
 
-  const userKeyRef = useRef(null);
+  const userKeyRef  = useRef(null);
+  const levelRef    = useRef(null);  // stale closure 방지용
   const [pastExpanded, setPastExpanded] = useState(false);
 
   const MAX_CHARS = 500;
@@ -245,7 +257,6 @@ export default function App() {
       : extra;
   }
 
-  // getAnonymousKey를 한 번만 실행하고 결과를 캐시 — 다시 시도 시에도 사용
   async function ensureUserKey() {
     if (userKeyRef.current) return;
     try {
@@ -257,8 +268,9 @@ export default function App() {
   }
 
   const fetchQuestion = useCallback(async () => {
+    const lv = levelRef.current;
     try {
-      const res  = await fetch(`${API_BASE}/api/question/today`, { headers: userHeaders() });
+      const res  = await fetch(`${API_BASE}/api/question/today?level=${lv}`, { headers: userHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '질문을 불러오지 못했습니다.');
       setQuestion(data.question);
@@ -266,6 +278,10 @@ export default function App() {
         setMyAnswer(data.myAnswer);
         setContent(data.myAnswer);
         setSubmitted(true);
+      } else {
+        setMyAnswer('');
+        setContent('');
+        setSubmitted(false);
       }
       setStatus('ready');
     } catch (e) {
@@ -275,26 +291,45 @@ export default function App() {
   }, []);
 
   const fetchAnswers = useCallback(async () => {
+    const lv = levelRef.current;
     try {
-      const res  = await fetch(`${API_BASE}/api/answers/today`);
+      const res  = await fetch(`${API_BASE}/api/answers/today?level=${lv}`);
       const data = await res.json();
       if (res.ok) { setAnswers(data.answers); setAnswerCount(data.count); }
     } catch {}
   }, []);
 
   const fetchPastQuestions = useCallback(async () => {
+    const lv = levelRef.current;
     try {
-      const res  = await fetch(`${API_BASE}/api/questions/past`, { headers: userHeaders() });
+      const res  = await fetch(`${API_BASE}/api/questions/past?level=${lv}`, { headers: userHeaders() });
       const data = await res.json();
       if (res.ok) setPastQuestions(data.questions);
     } catch {}
   }, []);
 
-  // getAnonymousKey 먼저 → 완료 후 데이터 fetch (race condition 방지)
+  // 레벨 선택 처리 (최초 선택 or 전환)
+  const selectLevel = useCallback(async (lv) => {
+    levelRef.current = lv;
+    setLevel(lv);
+    await saveLevel(lv);
+    setStatus('loading');
+    setPastExpanded(false);
+    await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+  }, [fetchQuestion, fetchPastQuestions]);
+
+  // getAnonymousKey + 저장된 레벨 로드 → 데이터 fetch
   useEffect(() => {
     const init = async () => {
       await ensureUserKey();
-      await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+      const saved = await loadLevel();
+      if (saved) {
+        levelRef.current = saved;
+        setLevel(saved);
+        await Promise.all([fetchQuestion(), fetchPastQuestions()]);
+      } else {
+        setStatus('ready'); // 레벨 미선택 → LevelSelect 화면
+      }
     };
     init();
 
@@ -309,8 +344,8 @@ export default function App() {
   }, [fetchQuestion, fetchPastQuestions]);
 
   useEffect(() => {
-    if (phase === 'answer' || phase === 'review') fetchAnswers();
-  }, [phase, fetchAnswers]);
+    if (level && (phase === 'answer' || phase === 'review')) fetchAnswers();
+  }, [phase, level, fetchAnswers]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -322,7 +357,7 @@ export default function App() {
       const res  = await fetch(`${API_BASE}/api/answer`, {
         method: 'POST',
         headers: userHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ content: content.trim() }),
+        body: JSON.stringify({ content: content.trim(), level: levelRef.current }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -357,6 +392,11 @@ export default function App() {
     );
   }
 
+  // 레벨 미선택 → 온보딩 화면
+  if (!level) {
+    return <LevelSelect onSelect={selectLevel} />;
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -366,6 +406,12 @@ export default function App() {
         </div>
         <div className="header-right">
           {streak >= 2 && <span className="streak-badge">{streak}일 연속</span>}
+          <button
+            className={`level-badge level-${level}`}
+            onClick={() => selectLevel(level === 'junior' ? 'senior' : 'junior')}
+          >
+            {level === 'junior' ? '주니어' : '시니어'}
+          </button>
           <span className={`phase-badge phase-${phase}`}>{PHASE_LABEL[phase]}</span>
         </div>
       </header>
@@ -373,7 +419,9 @@ export default function App() {
       <LiveClock />
 
       <main className="main">
-        {status === 'error' ? (
+        {status === 'loading' ? (
+          <div className="center-state"><div className="spinner" /></div>
+        ) : status === 'error' ? (
           <div className="center-state">
             <div className="error-icon">!</div>
             <p className="error-msg">{errorMsg}</p>
@@ -383,8 +431,8 @@ export default function App() {
           <>
             <section className="question-block">
               <p className="question-meta">오늘의 질문</p>
-              <h1 className="question-text">{question?.question}</h1>
-              <GlossaryHints text={question?.question} />
+              <h1 className="question-text">{question}</h1>
+              <GlossaryHints text={question} />
             </section>
 
             {phase === 'preview' && <PreviewPhase />}
@@ -568,6 +616,42 @@ function ReviewPhase({ myAnswer, answers }) {
         </ul>
       )}
     </section>
+  );
+}
+
+// ── 레벨 선택 (온보딩) ────────────────────────────────────────────────────────
+
+function LevelSelect({ onSelect }) {
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="brand">
+          <span className="brand-name">TURTLE</span>
+          <span className="brand-sub">기획자의 감각훈련소</span>
+        </div>
+      </header>
+      <main className="main">
+        <section className="level-select">
+          <h2 className="level-select-title">나는 어떤 기획자인가요?</h2>
+          <p className="level-select-sub">선택한 레벨에 맞는 질문이 매일 제공됩니다.<br />언제든지 변경할 수 있어요.</p>
+          <div className="level-cards">
+            <button className="level-card level-card-junior" onClick={() => onSelect('junior')}>
+              <span className="level-card-icon">🌱</span>
+              <span className="level-card-name">주니어</span>
+              <span className="level-card-desc">기획을 시작하거나<br />경력 3년 미만</span>
+            </button>
+            <button className="level-card level-card-senior" onClick={() => onSelect('senior')}>
+              <span className="level-card-icon">🚀</span>
+              <span className="level-card-name">시니어</span>
+              <span className="level-card-desc">실전 경험이 풍부하거나<br />경력 3년 이상</span>
+            </button>
+          </div>
+        </section>
+      </main>
+      <footer className="footer">
+        <p>매일 하나의 질문. 기획자의 감각을 훈련합니다.</p>
+      </footer>
+    </div>
   );
 }
 

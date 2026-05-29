@@ -13,6 +13,7 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
+    const level = req.query.level === 'junior' ? 'junior' : 'senior';
     const userId = getUserId(req);
     const file = path.join(process.cwd(), 'data', 'questions.json');
     const questions = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -25,8 +26,8 @@ module.exports = async (req, res) => {
       return res.json({ questions: [] });
     }
 
-    const poolKeys = pastQuestions.map(q => `answers:${q.date}`);
-    const myKeys   = pastQuestions.map(q => `answer:${userId}:${q.date}`);
+    const poolKeys = pastQuestions.map(q => `answers:${level}:${q.date}`);
+    const myKeys   = pastQuestions.map(q => `answer:${userId}:${q.date}:${level}`);
 
     const [poolResults, myResults] = await Promise.all([
       redis.mget(...poolKeys),
@@ -34,7 +35,8 @@ module.exports = async (req, res) => {
     ]);
 
     const past = pastQuestions.map((q, i) => ({
-      ...q,
+      date: q.date,
+      question: q[level],
       answerCount: (poolResults[i] || []).length,
       myAnswer: myResults[i]?.content || null,
     }));

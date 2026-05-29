@@ -15,7 +15,8 @@ module.exports = async (req, res) => {
 
   try {
     const today = getKSTDateStr();
-    const answers = (await redis.get(`answers:${today}`)) || [];
+    const level = req.query.level === 'junior' ? 'junior' : 'senior';
+    const answers = (await redis.get(`answers:${level}:${today}`)) || [];
     res.json({ answers, count: answers.length });
   } catch (err) {
     console.error('[answers/today]', err?.message);

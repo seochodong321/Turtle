@@ -808,6 +808,118 @@ body {
   color: #444;
 }
 
+/* ── 레벨 뱃지 (헤더) ────────────────────────────────────────────────────── */
+.level-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1px solid #e8e8e5;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+
+.level-badge.level-junior {
+  background: #f0f7ff;
+  color: #3a7bd5;
+  border-color: #c8dff7;
+}
+
+.level-badge.level-junior:hover {
+  background: #daeeff;
+  border-color: #a8ccf0;
+}
+
+.level-badge.level-senior {
+  background: #f5f0ff;
+  color: #7c3aed;
+  border-color: #d8c8f7;
+}
+
+.level-badge.level-senior:hover {
+  background: #ede5ff;
+  border-color: #c4b0f0;
+}
+
+/* ── 레벨 선택 (온보딩) ─────────────────────────────────────────────────── */
+.level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0 32px;
+  text-align: center;
+}
+
+.level-select-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.level-select-sub {
+  font-size: 14px;
+  color: #888;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+.level-cards {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.level-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  border-radius: 16px;
+  border: 2px solid #e8e8e5;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.level-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.level-card-junior:hover {
+  border-color: #3a7bd5;
+}
+
+.level-card-senior:hover {
+  border-color: #7c3aed;
+}
+
+.level-card-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.level-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.01em;
+}
+
+.level-card-desc {
+  font-size: 13px;
+  color: #999;
+  line-height: 1.6;
+}
+
 /* ── 반응형 ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .header         { padding: 16px 20px; }
@@ -817,4 +929,5 @@ body {
   .preview-card   { padding: 28px 20px; }
   .submitted-card { padding: 32px 20px; }
   .guide          { padding: 20px; }
+  .level-cards    { flex-direction: column; max-width: 100%; }
 }

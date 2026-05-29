@@ -1,7 +1,7 @@
 {
   "name": "gamsak-backend",
   "version": "1.0.0",
-  "description": "기획자의 감각훈련소 - Backend",
+  "description": "기획자의 감각훈련소, 터틀 - Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

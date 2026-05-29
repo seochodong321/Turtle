@@ -1,7 +1,7 @@
 import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
-  appName: 'turtle-gamsak', // 콘솔에 등록한 appName으로 변경하세요
+  appName: 'turtle',
   brand: {
     displayName: '기획자의 감각훈련소',
     primaryColor: '#111111',

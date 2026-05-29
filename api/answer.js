@@ -27,13 +27,15 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '답변은 500자 이내로 작성해주세요.' });
   }
 
+  const level = (req.body || {}).level === 'junior' ? 'junior' : 'senior';
   const userId = getUserId(req);
   const today = getKSTDateStr();
-  const userKey = `answer:${userId}:${today}`;
+  const poolKey = `answers:${level}:${today}`;
+  const userKey = `answer:${userId}:${today}:${level}`;
 
   try {
     const [existing, prevAnswer] = await Promise.all([
-      redis.get(`answers:${today}`),
+      redis.get(poolKey),
       redis.get(userKey),
     ]);
 
@@ -49,12 +51,11 @@ module.exports = async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    // 기존 답변이 있으면 풀에서 제거 후 교체
     const filtered = pool.filter(a => !prevAnswer || a.id !== prevAnswer.id);
 
     const TTL_90D = 90 * 24 * 60 * 60;
     await Promise.all([
-      redis.set(`answers:${today}`, [...filtered, newAnswer], { ex: TTL_90D }),
+      redis.set(poolKey, [...filtered, newAnswer], { ex: TTL_90D }),
       redis.set(userKey, newAnswer),
     ]);
 
