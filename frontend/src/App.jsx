@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getAnonymousKey } from '@apps-in-toss/web-framework';
 
 // 개발(vite proxy): 상대 URL / 빌드(ait build): Vercel 절대 URL
@@ -57,23 +57,24 @@ const GLOSSARY = [
   { terms: ['프리미엄', 'Freemium'], def: '기본 기능은 무료로 제공하고 고급 기능에 요금을 부과하는 수익 모델.' },
 ];
 
+// RegExp를 모듈 로드 시 한 번만 컴파일 (매 렌더 재컴파일 방지)
+const COMPILED_GLOSSARY = GLOSSARY.map(entry => ({
+  term: entry.terms[0],
+  def:  entry.def,
+  patterns: entry.terms.map(term => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return /^[A-Za-z0-9/]/.test(term)
+      ? new RegExp(`\\b${escaped}\\b`)
+      : new RegExp(escaped);
+  }),
+}));
+
 function getGlossaryHints(text) {
   if (!text) return [];
   const found = [];
-  const seen  = new Set();
-  for (const entry of GLOSSARY) {
-    for (const term of entry.terms) {
-      if (seen.has(entry.def)) break;
-      // 단어 경계 처리: 영문은 \b, 한글은 포함 여부로
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = /^[A-Za-z0-9/]/.test(term)
-        ? new RegExp(`\\b${escaped}\\b`)
-        : new RegExp(escaped);
-      if (pattern.test(text)) {
-        found.push({ term: entry.terms[0], def: entry.def });
-        seen.add(entry.def);
-        break;
-      }
+  for (const entry of COMPILED_GLOSSARY) {
+    if (entry.patterns.some(p => p.test(text))) {
+      found.push({ term: entry.term, def: entry.def });
     }
   }
   return found;
@@ -243,10 +244,21 @@ export default function App() {
   const PAST_LIMIT = 10;
 
   function userHeaders(extra = {}) {
-    const h = { ...extra };
-    if (userKeyRef.current) h['x-user-key'] = userKeyRef.current;
-    return h;
+    return userKeyRef.current
+      ? { ...extra, 'x-user-key': userKeyRef.current }
+      : extra;
   }
+
+  // getAnonymousKey를 한 번만 실행하고 결과를 캐시 — 다시 시도 시에도 사용
+  const ensureUserKey = useCallback(async () => {
+    if (userKeyRef.current) return;
+    try {
+      const result = await getAnonymousKey();
+      if (result && result !== 'ERROR' && result.hash) {
+        userKeyRef.current = result.hash;
+      }
+    } catch {}
+  }, []);
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -285,12 +297,7 @@ export default function App() {
   // getAnonymousKey 먼저 → 완료 후 데이터 fetch (race condition 방지)
   useEffect(() => {
     const init = async () => {
-      try {
-        const result = await getAnonymousKey();
-        if (result && result !== 'ERROR' && result.hash) {
-          userKeyRef.current = result.hash;
-        }
-      } catch {}
+      await ensureUserKey();
       await Promise.all([fetchQuestion(), fetchPastQuestions()]);
     };
     init();
@@ -303,7 +310,7 @@ export default function App() {
     }, 30_000);
 
     return () => clearInterval(tick);
-  }, [fetchQuestion, fetchPastQuestions]);
+  }, [ensureUserKey, fetchQuestion, fetchPastQuestions]);
 
   useEffect(() => {
     if (phase === 'answer' || phase === 'review') fetchAnswers();
@@ -334,7 +341,10 @@ export default function App() {
     }
   }
 
-  const streak = calcStreak(pastQuestions, !!(submitted || myAnswer));
+  const streak = useMemo(
+    () => calcStreak(pastQuestions, !!(submitted || myAnswer)),
+    [pastQuestions, submitted, myAnswer]
+  );
 
   // ── 렌더 ─────────────────────────────────────────────────────────────────────
 
@@ -366,7 +376,7 @@ export default function App() {
           <div className="center-state">
             <div className="error-icon">!</div>
             <p className="error-msg">{errorMsg}</p>
-            <button className="retry-btn" onClick={fetchQuestion}>다시 시도</button>
+            <button className="retry-btn" onClick={async () => { await ensureUserKey(); fetchQuestion(); }}>다시 시도</button>
           </div>
         ) : (
           <>

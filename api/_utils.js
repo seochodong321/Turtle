@@ -34,7 +34,7 @@ function getClientIP(req) {
 // 앱인토스 미니앱: x-user-key(getAnonymousKey 해시)를 우선 사용, 없으면 IP 폴백
 function getUserId(req) {
   const key = req.headers['x-user-key'];
-  if (key && typeof key === 'string' && key.length > 0) return key;
+  if (key && typeof key === 'string' && key.length > 0 && key.length <= 128) return key;
   return getClientIP(req);
 }
 
