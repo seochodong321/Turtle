@@ -5,7 +5,7 @@ export default defineConfig({
   brand: {
     displayName: '기획자의 감각훈련소',
     primaryColor: '#111111',
-    icon: '', // 콘솔에서 업로드한 아이콘 URL로 변경하세요
+    icon: 'https://static.toss.im/appsintoss/19859/74a638cb-8367-4d55-b62b-e68dd14e6422.png',
   },
   web: {
     host: 'localhost',
